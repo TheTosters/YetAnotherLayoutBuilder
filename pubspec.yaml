@@ -1,4 +1,4 @@
-name: yet_anoter_layout_builder
+name: yet_another_layout_builder
 description: A starting point for Dart libraries or applications.
 version: 1.0.0
 # homepage: https://www.example.com
@@ -8,6 +8,9 @@ environment:
 
 
 dependencies:
+  flutter:
+    sdk: flutter
+
   processing_tree:
     git:
       url: https://github.com/TheTosters/processing_tree.git
@@ -17,3 +20,4 @@ dev_dependencies:
   lints: ^1.0.0
   test: ^1.16.0
   dart_code_metrics: ^4.1.0
+  flutter_lints: ^1.0.0

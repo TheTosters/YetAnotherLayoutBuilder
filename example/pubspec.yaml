@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  yet_anoter_layout_builder:
+  yet_another_layout_builder:
     path: ../
 
   cupertino_icons: ^1.0.2
