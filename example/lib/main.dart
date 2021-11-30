@@ -49,7 +49,9 @@ class _MyHomePageState extends State<MyHomePage> {
           future: _loadFileContent("assets/layout.xml"),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              builder ??= yalb.LayoutBuilder(snapshot.data!);
+              builder ??= yalb.LayoutBuilder(snapshot.data!, {
+                "MyText" : "This is my text"
+              });
               return builder!.build(context);
             }
             return Container();

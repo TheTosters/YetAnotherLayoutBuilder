@@ -3,7 +3,12 @@ import 'package:yet_another_layout_builder/yet_another_layout_builder.dart';
 
 void registerItems() {
   Registry.addWidgetContainerBuilder("Center", _centerBuilder);
+  Registry.addWidgetContainerBuilder("Column", _columnBuilder);
   Registry.addWidgetBuilder("Text", _textBuilder);
+}
+
+Widget _columnBuilder(WidgetData data) {
+  return Column(children: data.children!);
 }
 
 Widget _centerBuilder(WidgetData data) {

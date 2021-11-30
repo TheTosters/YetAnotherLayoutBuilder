@@ -54,7 +54,7 @@ Action _widgetConsumeAndProduceDelegate(dynamic context, dynamic data) {
   LayoutBuildContext lbc = context;
   final WidgetData wData = data;
   wData.buildContext = lbc.buildContext;
-  wData.children = lbc.widgets;
+  wData.children = List.from(lbc.widgets, growable:false);
   lbc.widget = wData.builder(wData);
   lbc.widgets.clear();
   lbc.widgets.add(lbc.widget!);
@@ -81,6 +81,10 @@ class Registry {
 }
 
 class LayoutBuildCoordinator implements BuildCoordinator {
+  final Map<String, dynamic> objects;
+
+  LayoutBuildCoordinator(this.objects);
+
   @override
   PNDelegate? delegate(String name) {
     if (name.startsWith("_")) {
@@ -91,12 +95,28 @@ class LayoutBuildCoordinator implements BuildCoordinator {
 
   @override
   dynamic delegateData(String delegateName, Map<String, dynamic> rawData) {
+    _resolveExternals(rawData);
     if (delegateName.startsWith("_")) {
       return KeyValue(delegateName.substring(1), rawData["value"]);
     }
     final item = Registry._items[delegateName]!;
     WidgetData result = WidgetData(item.builder, item.dataProcessor(rawData));
     return result;
+  }
+
+  void _resolveExternals(Map<String, dynamic> rawData) {
+    //Expect that values in rawData is always String at this moment
+    rawData.updateAll((key, value) {
+      if (value.startsWith("\$")) {
+        //resolve as string
+        return objects[value.substring(1)].toString();
+
+      } else if (value.startsWith("@")) {
+        //resolve as object itself
+        return objects[value.substring(1)];
+      }
+      return value;
+    });
   }
 
   @override
@@ -106,4 +126,5 @@ class LayoutBuildCoordinator implements BuildCoordinator {
     }
     return Registry._items[name]!.itemType;
   }
+
 }

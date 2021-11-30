@@ -14,8 +14,8 @@ class LayoutBuildContext {
 class LayoutBuilder {
   late TreeProcessor _processor;
 
-  LayoutBuilder(String xmlStr) {
-    LayoutBuildCoordinator coordinator = LayoutBuildCoordinator();
+  LayoutBuilder(String xmlStr, Map<String, dynamic> objects) {
+    LayoutBuildCoordinator coordinator = LayoutBuildCoordinator(objects);
     XmlTreeBuilder builder = XmlTreeBuilder.coordinated(coordinator);
     _processor = builder.build(xmlStr).inverted();
   }

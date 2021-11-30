@@ -1,5 +1,13 @@
-<Center>
+<Column>
+    <Text text="This is first Sparta"/>
+
     <Text>
-        <_text value="This is Sparta!"/>
+        <_text value="This is Sparta Two!"/>
     </Text>
-</Center>
+
+    <Text>
+        <_text value="$MyText"/>
+    </Text>
+
+    <Text text="$MyText"/>
+</Column>
