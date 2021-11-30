@@ -1,8 +1,10 @@
+import 'package:example/registry.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yet_another_layout_builder/yet_another_layout_builder.dart' as yalb;
 
 void main() {
+  registerItems();
   runApp(const MyApp());
 }
 
@@ -47,7 +49,7 @@ class _MyHomePageState extends State<MyHomePage> {
           future: _loadFileContent("assets/layout.xml"),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              builder ??= yalb.LayoutBuilder();
+              builder ??= yalb.LayoutBuilder(snapshot.data!);
               return builder!.build(context);
             }
             return Container();
