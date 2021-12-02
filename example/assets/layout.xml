@@ -9,12 +9,12 @@
         <_data value="$MyText"/>
     </Text>
 
-    <Text data="$MyText"/>
+    <Text data="$MyText" textAlign="right"/>
 
     <!-- Widget builder generation for node Fido will be omitted due configuration in build.yaml,
         but Fido children will be processed, if this is not expected, child nodes must be also
         added to ignore list. -->
-    <Fido>
-        <Container/>
-    </Fido>
+<!--    <Fido>-->
+<!--        <Container/>-->
+<!--    </Fido>-->
 </Column>

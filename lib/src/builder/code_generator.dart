@@ -2,6 +2,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:collection/collection.dart';
 import 'package:logging/logging.dart';
+import 'package:yet_another_layout_builder/src/builder/code_snippets.dart';
 
 import 'found_widget.dart';
 import 'progress_collector.dart';
@@ -12,6 +13,8 @@ class CodeGenerator {
   final ProgressCollector? progressCollector;
   late bool _childHandled;
 
+  final Set<CodeSnippets> _neededExt = {};
+
   CodeGenerator(
       Iterable<FoundWidget> widgets, this.progressCollector, this.logger)
       : widgets = widgets.sorted((a, b) => a.name!.compareTo(b.name!));
@@ -21,12 +24,22 @@ class CodeGenerator {
     _generateNotice(sb);
     _generateProgressLog(sb);
     _generateImports(sb);
-    _generateRegisterMethod(sb);
     for (var widget in widgets) {
       if (widget.constructor != null) {
         _generateBuilderMethod(widget, sb);
+        widget.useCustomDataProcessor = widget.constructor?.parameters.any(
+                (p) =>
+                    widget.attributes.contains(p.name) &&
+                    p.type.element?.kind == ElementKind.ENUM) ??
+            false;
+        _generateDataProcessorMethod(widget, sb);
       }
     }
+    for (var ext in _neededExt) {
+      sb.write(codeSnippetsPool[ext]);
+      sb.writeln("\n"); //2x /n :P
+    }
+    _generateRegisterMethod(sb);
     return sb.toString();
   }
 
@@ -49,6 +62,10 @@ class CodeGenerator {
       sb.write(widget.name);
       sb.write("\", ");
       _writeBuilderName(widget, sb);
+      if (widget.useCustomDataProcessor) {
+        sb.write(", dataProcessor:");
+        _writeProcessorName(widget, sb);
+      }
       sb.writeln(");");
     }
     sb.writeln("}\n");
@@ -189,7 +206,8 @@ class CodeGenerator {
     sb.writeln();
   }
 
-  void _writeCommentList(String title, int indent, Iterable? list, StringBuffer sb) {
+  void _writeCommentList(
+      String title, int indent, Iterable? list, StringBuffer sb) {
     if (list != null && list.isNotEmpty) {
       _writeComment(title, indent, sb);
       for (var file in list) {
@@ -219,11 +237,42 @@ class CodeGenerator {
 
   void _writeComment(String? title, int indentLvl, StringBuffer sb) {
     sb.write("//");
-    for(int t = 1; t < indentLvl; t++) {
+    for (int t = 1; t < indentLvl; t++) {
       sb.write("  ");
     }
     if (title != null) {
       sb.writeln(title);
     }
+  }
+
+  void _generateDataProcessorMethod(FoundWidget widget, StringBuffer sb) {
+    if (!widget.useCustomDataProcessor) {
+      return;
+    }
+    sb.write("dynamic ");
+    _writeProcessorName(widget, sb);
+    sb.writeln("(Map<String, dynamic> inData) {");
+    for (var p in widget.constructor!.parameters) {
+      bool inAttribs = widget.attributes.contains(p.name);
+      if (inAttribs && p.type.element?.kind == ElementKind.ENUM) {
+        //eg.: inData.updateEnum("textAlign", TextAlign.values);
+        sb.write('  inData.updateEnum("');
+        sb.write(p.name);
+        sb.write('", ');
+        sb.write(p.type.element?.name);
+        sb.writeln(".values);");
+        _neededExt.add(CodeSnippets.mapStringToEnum);
+        widget.useCustomDataProcessor = true;
+      }
+    }
+    sb.writeln("  return inData;");
+    sb.writeln("}\n");
+  }
+
+  void _writeProcessorName(FoundWidget widget, StringBuffer sb) {
+    sb.write("_");
+    sb.write(widget.name?.substring(0, 1).toLowerCase());
+    sb.write(widget.name?.substring(1));
+    sb.write("DataProcessor");
   }
 }

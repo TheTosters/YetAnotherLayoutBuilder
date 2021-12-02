@@ -1,3 +1,4 @@
+import 'package:example/registry.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yet_another_layout_builder/yet_another_layout_builder.dart'
@@ -7,6 +8,7 @@ import 'widget_repository.g.dart';
 
 void main() {
   registerWidgetBuilders();
+  //registerItems();
   runApp(const MyApp());
 }
 

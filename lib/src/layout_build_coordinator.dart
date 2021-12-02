@@ -64,9 +64,11 @@ Action _widgetConsumeAndProduceDelegate(dynamic context, dynamic data) {
 class Registry {
   static final Map<String, LayoutBuilderItem> _items = {};
 
-  static void addWidgetBuilder(String elementName, WidgetBuilder _builder) {
+  static void addWidgetBuilder(String elementName, WidgetBuilder _builder,
+      {DelegateDataProcessor dataProcessor = _nopProcessor}) {
+
     _items[elementName] = LayoutBuilderItem(elementName,
-        _widgetProducerDelegate, _builder, _nopProcessor, ParsedItemType.owner);
+        _widgetProducerDelegate, _builder, dataProcessor, ParsedItemType.owner);
   }
 
   static void addWidgetContainerBuilder(

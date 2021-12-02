@@ -11,5 +11,7 @@ class FoundWidget {
   //filled by widget class validator
   ConstructorElement? constructor;
 
+  bool useCustomDataProcessor = false;
+
   FoundWidget(this.name);
 }
