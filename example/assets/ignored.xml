@@ -1,0 +1,14 @@
+<ignored>
+    <!-- This file will be ignored by build_runner due to following entry in build.yaml:
+    targets:
+      $default:
+        builders:
+          yet_another_layout_builder|widgetRepoBuilder:
+            options:
+              ignore_input:
+                - ignored.xml
+
+        Additionally you can add option "ignore_nodes" add list all xml nodes (Case Sensitive!)
+        which should be ignored by build_runner.
+    -->
+</ignored>

@@ -1,0 +1,11 @@
+builders:
+
+  widgetRepoBuilder:
+    import: "package:yet_another_layout_builder/builder.dart"
+    builder_factories: ["widgetRepoBuilder"]
+    build_extensions: {"lib/$lib$": ["widget_repository.g.dart"]}
+    auto_apply: root_package
+    build_to: source
+    defaults:
+      options:
+        collect_progress: true

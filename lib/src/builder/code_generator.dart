@@ -4,18 +4,22 @@ import 'package:collection/collection.dart';
 import 'package:logging/logging.dart';
 
 import 'found_widget.dart';
+import 'progress_collector.dart';
 
 class CodeGenerator {
   final Iterable<FoundWidget> widgets;
   final Logger logger;
+  final ProgressCollector? progressCollector;
   late bool _childHandled;
 
-  CodeGenerator(Iterable<FoundWidget> widgets, this.logger)
+  CodeGenerator(
+      Iterable<FoundWidget> widgets, this.progressCollector, this.logger)
       : widgets = widgets.sorted((a, b) => a.name!.compareTo(b.name!));
 
   String generate() {
     StringBuffer sb = StringBuffer();
     _generateNotice(sb);
+    _generateProgressLog(sb);
     _generateImports(sb);
     _generateRegisterMethod(sb);
     for (var widget in widgets) {
@@ -170,5 +174,56 @@ class CodeGenerator {
         " layout execute:");
     sb.writeln("// >dart run build_runner build");
     sb.writeln();
+  }
+
+  void _generateProgressLog(StringBuffer sb) {
+    if (progressCollector == null) {
+      return;
+    }
+    final tmp = progressCollector!.data[ProgressCollector.keyProcessedFiles];
+    _writeProcessedFileList("Parsed files:", tmp, sb);
+    sb.writeln();
+
+    final tmp2 = progressCollector!.data[ProgressCollector.keyIgnoredFiles];
+    _writeCommentList("Found but ignored files:", 1, tmp2, sb);
+    sb.writeln();
+  }
+
+  void _writeCommentList(String title, int indent, Iterable? list, StringBuffer sb) {
+    if (list != null && list.isNotEmpty) {
+      _writeComment(title, indent, sb);
+      for (var file in list) {
+        _writeComment(null, indent + 1, sb);
+        sb.writeln(file.toString());
+      }
+    }
+  }
+
+  void _writeProcessedFileList(String title, Iterable? list, StringBuffer sb) {
+    if (list == null || list.isEmpty) {
+      return;
+    }
+    _writeComment(title, 1, sb);
+    for (var file in list) {
+      _writeComment(file.toString(), 2, sb);
+
+      final tmp = progressCollector?.data[ProgressCollector.keyProcessedNodes];
+      final nodes = tmp?[file.toString()];
+      _writeCommentList("Processed nodes:", 3, nodes, sb);
+
+      final tmp2 = progressCollector?.data[ProgressCollector.keyIgnoredNodes];
+      final nodes2 = tmp2?[file.toString()];
+      _writeCommentList("Ignored nodes:", 3, nodes2, sb);
+    }
+  }
+
+  void _writeComment(String? title, int indentLvl, StringBuffer sb) {
+    sb.write("//");
+    for(int t = 1; t < indentLvl; t++) {
+      sb.write("  ");
+    }
+    if (title != null) {
+      sb.writeln(title);
+    }
   }
 }

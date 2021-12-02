@@ -1,0 +1,9 @@
+targets:
+  $default:
+    builders:
+      yet_another_layout_builder|widgetRepoBuilder:
+        options:
+          ignore_input:
+            - ignored.xml
+          ignore_nodes:
+            - Fido

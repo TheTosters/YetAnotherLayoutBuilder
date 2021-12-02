@@ -3,12 +3,15 @@ import 'package:xml/xml.dart';
 import 'package:validators/validators.dart';
 
 import 'found_widget.dart';
+import 'progress_collector.dart';
 
 class XmlAnalyzer {
   final Logger logger;
   final Map<String, FoundWidget> items = {};
+  final Iterable ignoredNodes;
+  final ProgressCollector? progressCollector;
 
-  XmlAnalyzer(this.logger);
+  XmlAnalyzer(this.logger, this.progressCollector, this.ignoredNodes);
 
   void process(String xmlStr, String path) {
     final xmlDoc = XmlDocument.parse(xmlStr);
@@ -26,6 +29,16 @@ class XmlAnalyzer {
       }
     }
     final wName = xmlElement.name.toString();
+
+    //should not be processed?
+    if (ignoredNodes.any((i) => i.toString() == wName)) {
+      logger
+          .warning("XML node '$wName' found but ignored due exclusion option.");
+      progressCollector?.addIgnoredNode(wName, path);
+      return;
+    }
+    progressCollector?.addProcessedNode(wName, path);
+
     var widget = items[wName];
     if (widget == null) {
       widget = FoundWidget(wName);
