@@ -1,13 +1,13 @@
 <Column>
-    <Text text="This is first Sparta"/>
+    <Text data="This is first Sparta"/>
 
     <Text>
-        <_text value="This is Sparta Two!"/>
+        <_data value="This is Sparta Two!"/>
     </Text>
 
     <Text>
-        <_text value="$MyText"/>
+        <_data value="$MyText"/>
     </Text>
 
-    <Text text="$MyText"/>
+    <Text data="$MyText"/>
 </Column>

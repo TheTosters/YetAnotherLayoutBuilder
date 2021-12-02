@@ -2,7 +2,7 @@
 .dart_tool/
 .packages
 
-# Conventional directory for build outputs.
+# Conventional directory for builder outputs.
 build/
 
 # Omit committing pubspec.lock for library packages; see

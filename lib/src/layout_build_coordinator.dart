@@ -1,15 +1,15 @@
-import 'package:flutter/material.dart' as Material;
+import 'package:flutter/material.dart' as material;
 import 'package:processing_tree/processing_tree.dart';
 
 import '../yet_another_layout_builder.dart';
 
 typedef DelegateDataProcessor = dynamic Function(Map<String, dynamic> inData);
-typedef WidgetBuilder = Material.Widget Function(WidgetData data);
+typedef WidgetBuilder = material.Widget Function(WidgetData data);
 
 class WidgetData {
   final Map<String, dynamic> data;
-  List<Material.Widget>? children;
-  late Material.BuildContext buildContext;
+  List<material.Widget>? children;
+  late material.BuildContext buildContext;
   final WidgetBuilder builder;
 
   WidgetData(this.builder, this.data);
@@ -54,7 +54,7 @@ Action _widgetConsumeAndProduceDelegate(dynamic context, dynamic data) {
   LayoutBuildContext lbc = context;
   final WidgetData wData = data;
   wData.buildContext = lbc.buildContext;
-  wData.children = List.from(lbc.widgets, growable:false);
+  wData.children = List.from(lbc.widgets, growable: false);
   lbc.widget = wData.builder(wData);
   lbc.widgets.clear();
   lbc.widgets.add(lbc.widget!);
@@ -110,7 +110,6 @@ class LayoutBuildCoordinator implements BuildCoordinator {
       if (value.startsWith("\$")) {
         //resolve as string
         return objects[value.substring(1)].toString();
-
       } else if (value.startsWith("@")) {
         //resolve as object itself
         return objects[value.substring(1)];
@@ -126,5 +125,4 @@ class LayoutBuildCoordinator implements BuildCoordinator {
     }
     return Registry._items[name]!.itemType;
   }
-
 }

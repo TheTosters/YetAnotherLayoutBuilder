@@ -1,10 +1,12 @@
-import 'package:example/registry.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:yet_another_layout_builder/yet_another_layout_builder.dart' as yalb;
+import 'package:yet_another_layout_builder/yet_another_layout_builder.dart'
+    as yalb;
+
+import 'widget_repository.g.dart';
 
 void main() {
-  registerItems();
+  registerWidgetBuilders();
   runApp(const MyApp());
 }
 
@@ -32,9 +34,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
   yalb.LayoutBuilder? builder;
-  
+
   Future<String> _loadFileContent(String path) {
     return rootBundle.loadString(path);
   }
@@ -42,20 +43,18 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: FutureBuilder<String>(
-          future: _loadFileContent("assets/layout.xml"),
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              builder ??= yalb.LayoutBuilder(snapshot.data!, {
-                "MyText" : "This is my text"
-              });
-              return builder!.build(context);
-            }
-            return Container();
-          })
-    );
+        appBar: AppBar(
+          title: Text(widget.title),
+        ),
+        body: FutureBuilder<String>(
+            future: _loadFileContent("assets/layout.xml"),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                builder ??= yalb.LayoutBuilder(
+                    snapshot.data!, {"MyText": "This is my text"});
+                return builder!.build(context);
+              }
+              return Container();
+            }));
   }
 }
