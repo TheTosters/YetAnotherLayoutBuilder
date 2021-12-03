@@ -13,7 +13,7 @@ class CodeGenerator {
   final ProgressCollector? progressCollector;
   late bool _childHandled;
 
-  final Set<CodeSnippets> _neededExt = {};
+  final CodeSnippetsWriter codeExt = CodeSnippetsWriter();
 
   CodeGenerator(
       Iterable<FoundWidget> widgets, this.progressCollector, this.logger)
@@ -35,10 +35,7 @@ class CodeGenerator {
         _generateDataProcessorMethod(widget, sb);
       }
     }
-    for (var ext in _neededExt) {
-      sb.write(codeSnippetsPool[ext]);
-      sb.writeln("\n"); //2x /n :P
-    }
+    codeExt.writeSnippets(sb);
     _generateRegisterMethod(sb);
     return sb.toString();
   }
@@ -261,7 +258,7 @@ class CodeGenerator {
         sb.write('", ');
         sb.write(p.type.element?.name);
         sb.writeln(".values);");
-        _neededExt.add(CodeSnippets.mapStringToEnum);
+        codeExt.needMapStringToEnum();
         widget.useCustomDataProcessor = true;
       }
     }
