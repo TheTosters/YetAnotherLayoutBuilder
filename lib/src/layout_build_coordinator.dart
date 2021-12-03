@@ -5,6 +5,17 @@ import '../yet_another_layout_builder.dart';
 
 typedef DelegateDataProcessor = dynamic Function(Map<String, dynamic> inData);
 typedef WidgetBuilder = material.Widget Function(WidgetData data);
+typedef ConstBuilder = dynamic Function(
+    String parent, Map<String, dynamic> data);
+
+class ConstData {
+  final String attribName;
+  final ConstBuilder builder;
+  final String parentName;
+  final Map<String, dynamic> data;
+
+  ConstData(this.parentName, this.attribName, this.builder, this.data);
+}
 
 class WidgetData {
   final Map<String, dynamic> data;
@@ -21,10 +32,17 @@ class WidgetData {
 
 class LayoutBuilderItem {
   final String elementName;
-  final WidgetBuilder builder;
+  final dynamic builder; //WidgetBuilder or ConstBuilder
   final ParsedItemType itemType;
   final PNDelegate delegate;
   final DelegateDataProcessor dataProcessor;
+
+  //This is only meaningful for ConstBuilder
+  String? parentName;
+
+  //if we have several items with this same elementName,
+  // used for building const values
+  LayoutBuilderItem? next;
 
   LayoutBuilderItem(this.elementName, this.delegate, this.builder,
       this.dataProcessor, this.itemType);
@@ -34,10 +52,19 @@ dynamic _nopProcessor(Map<String, dynamic> inData) {
   return inData;
 }
 
-Action _returnDataValueDelegate(dynamic context, dynamic data) {
-  context.key = data.key;
-  context.value = data.value;
-  return Action.proceed;
+/// Const Value Builder for handling String const value nodes
+///
+/// Should be used for nodes which start with '_' and considered as String
+/// data node which should be converted into data in parent for example
+/// ```xml
+/// <Text>
+///   <_data text="this is text"/>
+/// </Text>
+/// ```
+/// This builder can be used for '_data' node from above example. It supports
+/// attribute which can be named _value_, _data_ or _text_
+dynamic _constValueStringBuilder(String parent, Map<String, dynamic> data) {
+  return data["value"] ?? data["data"] ?? data["text"];;
 }
 
 Action _widgetProducerDelegate(dynamic context, dynamic data) {
@@ -47,6 +74,14 @@ Action _widgetProducerDelegate(dynamic context, dynamic data) {
   wData.children = null;
   lbc.widget = wData.builder(wData);
   lbc.widgets.add(lbc.widget!);
+  return Action.proceed;
+}
+
+Action _constValueDelegate(dynamic context, dynamic data) {
+  KeyValue ctx = context;
+  final ConstData cData = data;
+  ctx.key = cData.attribName;
+  ctx.value = cData.builder(cData.parentName, cData.data);
   return Action.proceed;
 }
 
@@ -64,33 +99,42 @@ Action _widgetConsumeAndProduceDelegate(dynamic context, dynamic data) {
 class Registry {
   static final Map<String, LayoutBuilderItem> _items = {};
 
-  static void addWidgetBuilder(String elementName, WidgetBuilder _builder,
+  static void addWidgetBuilder(String elementName, WidgetBuilder builder,
       {DelegateDataProcessor dataProcessor = _nopProcessor}) {
-
     _items[elementName] = LayoutBuilderItem(elementName,
-        _widgetProducerDelegate, _builder, dataProcessor, ParsedItemType.owner);
+        _widgetProducerDelegate, builder, dataProcessor, ParsedItemType.owner);
   }
 
   static void addWidgetContainerBuilder(
-      String elementName, WidgetBuilder _builder) {
+      String elementName, WidgetBuilder builder) {
     _items[elementName] = LayoutBuilderItem(
         elementName,
         _widgetConsumeAndProduceDelegate,
-        _builder,
+        builder,
         _nopProcessor,
         ParsedItemType.owner);
   }
+
+  static void addValueBuilder(
+      String parentName, String elementName, ConstBuilder builder) {
+    final item = LayoutBuilderItem(elementName, _constValueDelegate,
+        builder, _nopProcessor, ParsedItemType.constValue);
+    item.parentName = parentName;
+    _items.update(elementName, (existing) => existing.next = item,
+        ifAbsent: () => item);
+  }
+
 }
 
-class LayoutBuildCoordinator implements BuildCoordinator {
+class LayoutBuildCoordinator extends BuildCoordinator {
   final Map<String, dynamic> objects;
 
   LayoutBuildCoordinator(this.objects);
-
+  
   @override
   PNDelegate? delegate(String name) {
     if (name.startsWith("_")) {
-      return _returnDataValueDelegate;
+      return _findConstDataDelegate(name.substring(1));
     }
     return Registry._items[name]!.delegate;
   }
@@ -99,7 +143,10 @@ class LayoutBuildCoordinator implements BuildCoordinator {
   dynamic delegateData(String delegateName, Map<String, dynamic> rawData) {
     _resolveExternals(rawData);
     if (delegateName.startsWith("_")) {
-      return KeyValue(delegateName.substring(1), rawData["value"]);
+      final name = delegateName.substring(1);
+      //Note: don't call item.dataProcessor for this type of node
+      //decision is that builder handle processing + building in one go!
+      return ConstData(parentNodeName, name, _findConstDataBuilder(name), rawData);
     }
     final item = Registry._items[delegateName]!;
     WidgetData result = WidgetData(item.builder, item.dataProcessor(rawData));
@@ -126,5 +173,26 @@ class LayoutBuildCoordinator implements BuildCoordinator {
       return ParsedItemType.constValue;
     }
     return Registry._items[name]!.itemType;
+  }
+
+  LayoutBuilderItem? _findBuilderItem(String parent, String name) {
+    var item = Registry._items[name];
+    while(item != null) {
+      if (item.parentName == parent) {
+        return item;
+      }
+      item = item.next;
+    }
+    return null;
+  }
+
+  PNDelegate _findConstDataDelegate(String name) {
+    final item = _findBuilderItem(parentNodeName, name);
+    return item?.delegate ?? _constValueDelegate;
+  }
+
+  ConstBuilder _findConstDataBuilder(String name) {
+    final item = _findBuilderItem(parentNodeName, name);
+    return item?.builder ?? _constValueStringBuilder;
   }
 }

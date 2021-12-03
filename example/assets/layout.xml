@@ -1,20 +1,24 @@
-<Column>
-    <Text data="This is first Sparta"/>
+<Container>
+    <_color value="FF00FF"/>
+    <Column>
+        <Text data="This is first Sparta"/>
 
-    <Text>
-        <_data value="This is Sparta Two!"/>
-    </Text>
+        <Text>
+            <_data value="This is Sparta Two!"/>
+    <!--        <_color a="255" r="233" g="100" b="0"/>-->
+        </Text>
 
-    <Text>
-        <_data value="$MyText"/>
-    </Text>
+        <Text>
+            <_data value="$MyText"/>
+        </Text>
 
-    <Text data="$MyText" textAlign="right"/>
+        <Text data="$MyText" textAlign="right"/>
 
-    <!-- Widget builder generation for node Fido will be omitted due configuration in build.yaml,
-        but Fido children will be processed, if this is not expected, child nodes must be also
-        added to ignore list. -->
-<!--    <Fido>-->
-<!--        <Container/>-->
-<!--    </Fido>-->
-</Column>
+        <!-- Widget builder generation for node Fido will be omitted due configuration in build.yaml,
+            but Fido children will be processed, if this is not expected, child nodes must be also
+            added to ignore list. -->
+    <!--    <Fido>-->
+    <!--        <Container/>-->
+    <!--    </Fido>-->
+    </Column>
+</Container>
