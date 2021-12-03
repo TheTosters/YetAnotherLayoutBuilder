@@ -1,19 +1,19 @@
+part "code_snippets_base.dart";
+
 /// All possible code snippets must be accessed through this enum
 enum _CodeSnippets {
-  mapStringToEnum
+  /// Allow to convert map value from string to proper enum value
+  mapStringToEnum,
+
+  ///  Allow to convert map value from string to int
+  mapStringToInt,
+
+  /// allows to parse dec or hex string into to int without 0x prefix
+  parseInt,
+
+  /// allows to parse Strings into int especially for usage in Color class
+  parseIntForColor
 }
-
-//This is turbo ugly, but I've no better idea yet ;(
-const Map<_CodeSnippets, String> _codeSnippetsPool = {
-    _CodeSnippets.mapStringToEnum : r'''
-  void updateEnum<T>(String key, List<T> values) {
-    if (containsKey(key)) {
-      final tmp = "${T.toString()}.${this[key]}";
-      this[key] = values.firstWhere((d) => d.toString() == tmp);
-    }
-  }''',
-
-};
 
 class NeededExtensionsCollector {
   /// Code snippets which should be put inside map extension
@@ -24,6 +24,19 @@ class NeededExtensionsCollector {
 
   void needMapStringToEnum() {
     _mapExt.add(_CodeSnippets.mapStringToEnum);
+  }
+
+  void needMapStringToInt() {
+    _mapExt.add(_CodeSnippets.mapStringToEnum);
+    _functions.add(_CodeSnippets.parseInt);
+  }
+
+  void needIntParse() {
+    _functions.add(_CodeSnippets.parseInt);
+  }
+
+  void needIntForColorParse() {
+    _functions.add(_CodeSnippets.parseIntForColor);
   }
 }
 
