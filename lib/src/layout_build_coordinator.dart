@@ -64,7 +64,7 @@ dynamic _nopProcessor(Map<String, dynamic> inData) {
 /// This builder can be used for '_data' node from above example. It supports
 /// attribute which can be named _value_, _data_ or _text_
 dynamic _constValueStringBuilder(String parent, Map<String, dynamic> data) {
-  return data["value"] ?? data["data"] ?? data["text"];;
+  return data["value"] ?? data["data"] ?? data["text"];
 }
 
 Action _widgetProducerDelegate(dynamic context, dynamic data) {

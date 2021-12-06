@@ -1,7 +1,7 @@
 part "code_snippets_base.dart";
 
 /// All possible code snippets must be accessed through this enum
-enum _CodeSnippets {
+enum CodeSnippets {
   /// Allow to convert map value from string to proper enum value
   mapStringToEnum,
 
@@ -17,26 +17,45 @@ enum _CodeSnippets {
 
 class NeededExtensionsCollector {
   /// Code snippets which should be put inside map extension
-  final Set<_CodeSnippets> _mapExt = {};
+  final Set<CodeSnippets> _mapExt = {};
 
   /// Code snippets which should be used as a free functions
-  final Set<_CodeSnippets> _functions = {};
+  final Set<CodeSnippets> _functions = {};
 
   void needMapStringToEnum() {
-    _mapExt.add(_CodeSnippets.mapStringToEnum);
+    _mapExt.add(CodeSnippets.mapStringToEnum);
   }
 
   void needMapStringToInt() {
-    _mapExt.add(_CodeSnippets.mapStringToEnum);
-    _functions.add(_CodeSnippets.parseInt);
+    _mapExt.add(CodeSnippets.mapStringToEnum);
+    _functions.add(CodeSnippets.parseInt);
   }
 
   void needIntParse() {
-    _functions.add(_CodeSnippets.parseInt);
+    _functions.add(CodeSnippets.parseInt);
   }
 
   void needIntForColorParse() {
-    _functions.add(_CodeSnippets.parseIntForColor);
+    _functions.add(CodeSnippets.parseIntForColor);
+  }
+
+  /// Generic access, use with care! Don't mess _mapExt and _functions
+  void needFunctionSnippets(Iterable<String> snippetIds) {
+    for(var id in snippetIds) {
+      _functions.add(strToCodeSnippets(id));
+    }
+  }
+
+  /// Generic access, use with care! Don't mess _mapExt and _functions
+  void needMapExtension(Iterable<String> snippetIds) {
+    for(var id in snippetIds) {
+      _mapExt.add(strToCodeSnippets(id));
+    }
+  }
+
+  CodeSnippets strToCodeSnippets(String key) {
+    final tmp = "CodeSnippets.$key";
+    return CodeSnippets.values.firstWhere((d) => d.toString() == tmp);
   }
 }
 

@@ -2,34 +2,64 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:logging/logging.dart';
 
-import 'found_widget.dart';
+import 'found_items.dart';
 
-class WidgetClassValidator {
-  final List<LibraryElement> libraries = [];
-  final Logger logger;
+class ConstValClassValidator extends GenericClassValidator {
 
-  WidgetClassValidator(this.logger);
+  ConstValClassValidator(Logger logger) : super(logger);
+
+  Future<void> prepare(Resolver resolver) async {
+    List<Uri> libUri = [
+      Uri.parse("package:flutter/painting.dart"),
+//      Uri.parse("package:flutter/material.dart"),
+      Uri.parse("package:yet_another_layout_builder/workaround.dart"),
+    ];
+    await _prepareLibraries(resolver, libUri);
+  }
+
+  void process(Map<String, Constructable> items) {
+    _process(items);
+  }
+}
+
+class WidgetClassValidator extends GenericClassValidator {
+
+  WidgetClassValidator(Logger logger) : super(logger);
 
   Future<void> prepare(Resolver resolver) async {
     List<Uri> libUri = [
       Uri.parse("package:flutter/widgets.dart"),
-//      Uri.parse("package:flutter/material.dart")
     ];
+    await _prepareLibraries(resolver, libUri);
+  }
+
+  void process(Map<String, FoundWidget> widgets) {
+    _process(widgets);
+  }
+}
+
+class GenericClassValidator {
+  final List<LibraryElement> libraries = [];
+  final Logger logger;
+
+  GenericClassValidator(this.logger);
+
+  Future<void> _prepareLibraries(Resolver resolver, List<Uri> libUri) async {
     for (var uri in libUri) {
       final lib = await resolver.libraryFor(AssetId.resolve(uri));
       libraries.add(lib);
     }
   }
 
-  void process(Map<String, FoundWidget> widgets) {
+  void _process(Map<String, Constructable> widgets) {
     _findClasses(widgets);
   }
 
-  void _findClasses(Map<String, FoundWidget> widgets) {
+  void _findClasses(Map<String, Constructable> items) {
     for (var library in libraries) {
       for (var export in library.exports) {
         var expLibrary = export.exportedLibrary!;
-        if (_findInLibrary(expLibrary, widgets)) {
+        if (_findInLibrary(expLibrary, items)) {
           //all widgets found
           return;
         }
@@ -37,10 +67,10 @@ class WidgetClassValidator {
     }
   }
 
-  bool _findInLibrary(LibraryElement lib, Map<String, FoundWidget> widgets) {
+  bool _findInLibrary(LibraryElement lib, Map<String, Constructable> items) {
     for (var unit in lib.units) {
       for (var clazz in unit.classes) {
-        if (_widgetsMatched(clazz, widgets)) {
+        if (_itemsMatched(clazz, items)) {
           return true;
         }
       }
@@ -49,21 +79,21 @@ class WidgetClassValidator {
   }
 
   //Check if class have constructor to which params match. If so, then
-  //assign this constructor to widget with this same name.
-  //returns true if all widgets in map have assigned constructor
-  bool _widgetsMatched(ClassElement clazz, Map<String, FoundWidget> widgets) {
-    FoundWidget? widget = widgets[clazz.name];
-    if (widget == null) {
+  //assign this constructor to item with this same name.
+  //returns true if all items in map have assigned constructor
+  bool _itemsMatched(ClassElement clazz, Map<String, Constructable> items) {
+    Constructable? item = items[clazz.name];
+    if (item == null) {
       return false;
     }
-    widget.constructor = _matchingConstructor(clazz, widget.attributes);
-    if (widget.constructor == null) {
-      final reason = "Widget with name ${clazz.name} found as a class, however"
-          " no constructor match params: ${widget.attributes}";
+    item.constructor = _matchingConstructor(clazz, item.attributes);
+    if (item.constructor == null) {
+      final reason = "Item with name ${clazz.name} found as a class, however"
+          " no constructor match params: ${item.attributes}";
       logger.severe(reason);
       throw Exception(reason);
     }
-    return widgets.values.every((w) => w.constructor != null);
+    return items.values.every((w) => w.constructor != null);
   }
 
   ConstructorElement? _matchingConstructor(

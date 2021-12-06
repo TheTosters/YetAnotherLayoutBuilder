@@ -3,6 +3,7 @@ import 'package:glob/glob.dart';
 import 'package:path/path.dart' as path;
 import 'package:logging/logging.dart';
 
+import 'found_items.dart';
 import 'path_matcher.dart';
 import 'progress_collector.dart';
 import 'widget_class_validator.dart';
@@ -16,6 +17,7 @@ class WidgetRepositoryBuilder implements Builder {
   static const String outputFileName = "widget_repository.g.dart";
   static final _allFilesInAssets = Glob('assets/**');
   final BuilderOptions options;
+  final logger = Logger("WidgetRepositoryBuilder");
 
   WidgetRepositoryBuilder(this.options);
 
@@ -28,12 +30,8 @@ class WidgetRepositoryBuilder implements Builder {
 
   @override
   Future build(BuildStep buildStep) async {
-    final logger = Logger("WidgetRepositoryBuilder");
     final progressCollector =
         options.config["collect_progress"] ? ProgressCollector() : null;
-
-    final validator = WidgetClassValidator(logger);
-    await validator.prepare(buildStep.resolver);
 
     final xmlAnalyzer =
         XmlAnalyzer(logger, progressCollector, options.config["ignore_nodes"]);
@@ -51,7 +49,7 @@ class WidgetRepositoryBuilder implements Builder {
       xmlAnalyzer.process(xmlStr, input.path);
     }
 
-    validator.process(xmlAnalyzer.items);
+    await _resolveClasses(buildStep, xmlAnalyzer.items);
 
     final output = _outputFile(buildStep);
     final codeGen =
@@ -65,6 +63,33 @@ class WidgetRepositoryBuilder implements Builder {
     logger.warning("Every time you add new types of nodes to xml files with"
         " layout rerun builder.");
     return buildStep.writeAsString(output, srcTxt);
+  }
+
+  Future<void> _resolveClasses(BuildStep buildStep, Map<String, FoundWidget> widgets) async {
+    final validator = WidgetClassValidator(logger);
+    await validator.prepare(buildStep.resolver);
+    final constValidator = ConstValClassValidator(logger);
+    await constValidator.prepare(buildStep.resolver);
+
+    validator.process(widgets);
+
+    //TODO: This need to be improved for see comment in
+    // xmlAnalyzer._combineConstItems
+    Map<String, Constructable> allConsts = {};
+    for(var widget in widgets.values) {
+      for(var c in widget.constItems.values) {
+        allConsts.putIfAbsent(c.typeName, () => Constructable.from(c));
+      }
+    }
+    constValidator.process(allConsts);
+    print("Const count: ${allConsts.length}, $allConsts");
+
+    //propagate resolved constructors to widgets
+    for(var widget in widgets.values) {
+      for (var c in widget.constItems.values) {
+        c.constructor = allConsts[c.typeName]!.constructor;
+      }
+    }
   }
 
   @override
