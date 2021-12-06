@@ -43,18 +43,17 @@ class ReflectionWriter {
     sb.write("    "); //lvl 2 indent
     bool canBeNull = p.type.nullabilitySuffix == NullabilitySuffix.question;
     if (p.isPositional) {
-      _writeWrapped(convFun, canBeNull, () => attribWriter(p.name, canBeNull));
+      _writeWrapped(convFun, () => attribWriter(p.name, canBeNull));
       sb.writeln(",");
     } else {
       sb.write(p.name);
       sb.write(": ");
-      _writeWrapped(convFun, canBeNull, () => attribWriter(p.name, canBeNull));
+      _writeWrapped(convFun, () => attribWriter(p.name, canBeNull));
       sb.writeln(",");
     }
   }
 
-  void _writeWrapped(
-      ConvertFunction? convFun, bool canBeNull, VoidFunction callback) {
+  void _writeWrapped(ConvertFunction? convFun, VoidFunction callback) {
     if (convFun != null) {
       sb.write(convFun.functionName);
       sb.write("(");
@@ -64,7 +63,7 @@ class ReflectionWriter {
 
     if (convFun != null) {
       sb.write(")");
-      if (!canBeNull) {
+      if (convFun.nullableResult) {
         sb.write("!");
       }
     }
@@ -80,14 +79,11 @@ class ReflectionWriter {
     //Check if expected param type is different then String, if yes perform
     //conversion
     if (p.type.isDartCoreInt) {
-      return ConvertFunction.withFunc("int.parse", []);
-
+      return ConvertFunction.withFunc("int.parse", false, []);
     } else if (p.type.isDartCoreDouble) {
-      return ConvertFunction.withFunc("double.parse", []);
-
+      return ConvertFunction.withFunc("double.parse", false, []);
     } else if (p.type.isDartCoreBool) {
-      return ConvertFunction.withFunc("bool.parse", []);
-
+      return ConvertFunction.withFunc("bool.parse", false, []);
     } else if (!p.type.isDartCoreString) {
       print("Probably this will cause problems, $p");
     }

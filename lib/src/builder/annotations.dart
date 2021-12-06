@@ -20,30 +20,35 @@ class ConvertFunction {
   final String functionName;
   final List<String> funcExt;
   final List<String> mapExt;
+  final bool nullableResult;
 
-  const ConvertFunction(this.functionName)
+  const ConvertFunction(this.functionName, this.nullableResult)
       : funcExt = const [],
         mapExt = const [];
-  const ConvertFunction.withFunc(this.functionName, this.funcExt)
+  const ConvertFunction.withFunc(
+      this.functionName, this.nullableResult, this.funcExt)
       : mapExt = const [];
-  const ConvertFunction.withMap(this.functionName, this.mapExt)
+  const ConvertFunction.withMap(
+      this.functionName, this.nullableResult, this.mapExt)
       : funcExt = const [];
-  const ConvertFunction.withBoth(this.functionName, this.funcExt, this.mapExt);
+  const ConvertFunction.withBoth(
+      this.functionName, this.nullableResult, this.funcExt, this.mapExt);
 }
 
 // expect other to be DartObjectImpl
 ConvertFunction convertFunctionFrom(dynamic other) {
   final fName = other.fields["functionName"].toStringValue();
+  final nullable = other.fields["nullableResult"].toBoolValue();
 
   final funcExt = <String>[];
-  for(var tmp in other.fields["funcExt"].toListValue()) {
-    funcExt.add( tmp.toStringValue() );
+  for (var tmp in other.fields["funcExt"].toListValue()) {
+    funcExt.add(tmp.toStringValue());
   }
 
   final mapExt = <String>[];
-  for(var tmp in other.fields["mapExt"].toListValue()) {
-    mapExt.add( tmp.toStringValue() );
+  for (var tmp in other.fields["mapExt"].toListValue()) {
+    mapExt.add(tmp.toStringValue());
   }
 
-  return ConvertFunction.withBoth(fName, funcExt, mapExt);
+  return ConvertFunction.withBoth(fName, nullable, funcExt, mapExt);
 }

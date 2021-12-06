@@ -4,8 +4,11 @@ import '../annotations.dart';
 /// annotations for builder.
 class Color {
   Color(
-      @ConvertFunction.withFunc("_parseIntForColor", ["parseIntForColor", "parseInt"])
-      int value);
+      @ConvertFunction.withFunc("_parseIntForColor", true, [
+    "parseIntForColor",
+    "parseInt"
+  ])
+          int value);
   Color.fromARGB(int a, int r, int g, int b);
   Color.fromRGBO(int r, int g, int b, double opacity);
 }
