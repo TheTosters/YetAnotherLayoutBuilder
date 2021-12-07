@@ -86,9 +86,9 @@ class ConstValClassFinder extends GenericClassFinder {
 
   Future<void> prepare(Resolver resolver) async {
     List<Uri> libUri = [
+      Uri.parse("package:yet_another_layout_builder/workaround.dart"),
       Uri.parse("package:flutter/painting.dart"),
 //      Uri.parse("package:flutter/material.dart"),
-      Uri.parse("package:yet_another_layout_builder/workaround.dart"),
     ];
     await _prepareLibraries(resolver, libUri);
   }

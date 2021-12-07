@@ -9,8 +9,9 @@ const Map<CodeSnippets, String> _codeSnippetsPool = {
       this[key] = values.firstWhere((d) => d.toString() == tmp);
     }
   }''',
+
   CodeSnippets.mapStringToInt: r'''
-    void updateInt(String key) {
+  void updateInt(String key) {
     if (containsKey(key)) {
       this[key] = _improvedIntParse(this[key]!);
     }
@@ -21,10 +22,38 @@ const Map<CodeSnippets, String> _codeSnippetsPool = {
       updateInt(s);
     }
   }''',
+
+  CodeSnippets.mapStringToDouble: r'''
+  void updateDouble(String key) {
+    if (containsKey(key)) {
+      this[key] = double.tryParse(this[key]!);
+    }
+  }
+
+  void updateAllDouble(Iterable<String> keys) {
+    for(var s in keys) {
+      updateDouble(s);
+    }
+  }''',
+
+  CodeSnippets.mapStringToBool: r'''  
+  void updateBool(String key) {
+    if (containsKey(key)) {
+      this[key] = (this[key]!).toLowerCase() == 'true';
+    }
+  }
+
+  void updateAllBool(Iterable<String> keys) {
+    for(var s in keys) {
+      updateBool(s);
+    }
+  }''',
+
   CodeSnippets.parseInt: r'''
 int? _improvedIntParse(String value) {
   return int.tryParse(value) ?? int.parse(value, radix: 16);
 }''',
+
   CodeSnippets.parseIntForColor: r'''
 int? _parseIntForColor(String v) {
   if (v.startsWith("#")) {

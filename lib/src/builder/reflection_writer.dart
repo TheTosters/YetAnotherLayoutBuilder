@@ -26,16 +26,18 @@ class ReflectionWriter {
 
   ConstructorElement get constructor => constructable.constructor!;
 
-  void writeCtrParams(AttribAccessWriter attribWriter) {
+  void writeCtrParams(AttribAccessWriter attribWriter,
+      {bool noWrappers = false}) {
     for (var p in constructor.parameters) {
       if (constructable.attributes.contains(p.name)) {
-        writeCtrParam(p, attribWriter);
+        writeCtrParam(p, noWrappers, attribWriter);
       }
     }
   }
 
-  void writeCtrParam(ParameterElement p, AttribAccessWriter attribWriter) {
-    ConvertFunction? convFun = _getConvertFunction(p);
+  void writeCtrParam(
+      ParameterElement p, bool noWrappers, AttribAccessWriter attribWriter) {
+    ConvertFunction? convFun = noWrappers ? null : _getConvertFunction(p);
     codeExt.needFunctionSnippets(convFun?.funcExt ?? const []);
     codeExt.needMapExtension(convFun?.mapExt ?? const []);
 

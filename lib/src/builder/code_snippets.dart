@@ -8,6 +8,12 @@ enum CodeSnippets {
   ///  Allow to convert map value from string to int
   mapStringToInt,
 
+  ///  Allow to convert map value from string to double
+  mapStringToDouble,
+
+  ///  Allow to convert map value from string to bool
+  mapStringToBool,
+
   /// allows to parse dec or hex string into to int without 0x prefix
   parseInt,
 
@@ -27,8 +33,16 @@ class NeededExtensionsCollector {
   }
 
   void needMapStringToInt() {
-    _mapExt.add(CodeSnippets.mapStringToEnum);
+    _mapExt.add(CodeSnippets.mapStringToInt);
     _functions.add(CodeSnippets.parseInt);
+  }
+
+  void needMapStringToDouble() {
+    _mapExt.add(CodeSnippets.mapStringToDouble);
+  }
+
+  void needMapStringToBool() {
+    _mapExt.add(CodeSnippets.mapStringToBool);
   }
 
   void needIntParse() {

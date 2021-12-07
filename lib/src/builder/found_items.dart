@@ -1,5 +1,3 @@
-import 'package:analyzer/dart/element/element.dart';
-
 enum Parentship { noChildren, oneChild, multipleChildren }
 
 /// This is widget info class, created for each xml node which is considered

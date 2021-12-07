@@ -33,9 +33,8 @@ class CodeGenerator {
       final constructor = _widgetCtrFor(widget.name);
       if (constructor != null) {
         _generateBuilderMethod(widget);
-        widget.useCustomDataProcessor = constructor.parameters.any((p) =>
-            widget.attributes.contains(p.name) &&
-            p.type.element?.kind == ElementKind.ENUM);
+        widget.useCustomDataProcessor =
+            _needCustomDataProcessor(widget, constructor);
         _generateDataProcessorMethod(widget, constructor);
       }
       for (var constVal in widget.constItems) {
@@ -157,7 +156,7 @@ class CodeGenerator {
     sb.write("  return ");
     sb.write(widget.name);
     sb.writeln("(");
-    rw.writeCtrParams(_writeAttribGetter);
+    rw.writeCtrParams(_writeAttribGetter, noWrappers: true);
 
     //Special case for parenthood
     if (!_childHandled && widget.parentship != Parentship.noChildren) {
@@ -185,7 +184,7 @@ class CodeGenerator {
       throw Exception(reason);
     }
     final rw = ReflectionWriter(widgetCtr, codeExt, sb);
-    rw.writeCtrParam(param, _writeAttribGetter);
+    rw.writeCtrParam(param, true, _writeAttribGetter);
   }
 
   void _writeAttribGetter(String name, bool canBeNull) {
@@ -282,8 +281,10 @@ class CodeGenerator {
       _writeProcessorName(widget);
       sb.writeln("(Map<String, dynamic> inData) {");
       for (var p in ctr.parameters) {
-        bool hasParam = widget.attributes.contains(p.name);
-        if (hasParam && p.type.element?.kind == ElementKind.ENUM) {
+        if (!widget.attributes.contains(p.name)) {
+          continue;
+        }
+        if (p.type.element?.kind == ElementKind.ENUM) {
           //eg.: inData.updateEnum("textAlign", TextAlign.values);
           sb.write('  inData.updateEnum("');
           sb.write(p.name);
@@ -291,7 +292,26 @@ class CodeGenerator {
           sb.write(p.type.element?.name);
           sb.writeln(".values);");
           codeExt.needMapStringToEnum();
-          widget.useCustomDataProcessor = true;
+
+        } else if (p.type.element?.name == "int") {
+          //eg.: inData.updateInt("width");
+          sb.write('  inData.updateInt("');
+          sb.write(p.name);
+          sb.writeln('");');
+          codeExt.needMapStringToInt();
+
+        } else if (p.type.element?.name == "double") {
+          //eg.: inData.updateDouble("width");
+          sb.write('  inData.updateDouble("');
+          sb.write(p.name);
+          sb.writeln('");');
+          codeExt.needMapStringToDouble();
+        } else if (p.type.element?.name == "bool") {
+          //eg.: inData.updateBool("enabled");
+          sb.write('  inData.updateBool("');
+          sb.write(p.name);
+          sb.writeln('");');
+          codeExt.needMapStringToBool();
         }
       }
       sb.writeln("  return inData;");
@@ -401,5 +421,31 @@ class CodeGenerator {
       sb.write('"');
     }
     sb.write("}");
+  }
+
+  //Detect enums or types other than String. Don't analyze constVals those are
+  //processed in different way.
+  bool _needCustomDataProcessor(
+      FoundWidget widget, ConstructorElement constructor) {
+    Set<String> supported = const <String>{"int", "double", "bool"};
+
+    bool result = constructor.parameters.any((p) =>
+        widget.attributes.contains(p.name) &&
+        (p.type.element?.kind == ElementKind.ENUM ||
+            supported.contains(p.type.element?.name)));
+
+    for (var p in constructor.parameters) {
+      if (!result &&
+          widget.attributes.contains(p.name) &&
+          p.type.element?.name != "String" &&
+          widget.constItems.none((c) => c.destAttrib == p.name)) {
+        final reason = "${widget.name} parameter $p is nor Enum nor type"
+            " $supported, if this is some ui class please provide it by"
+            " child node attribute.";
+        logger.severe(reason);
+        throw Exception(reason);
+      }
+    }
+    return result;
   }
 }

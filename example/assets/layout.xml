@@ -5,10 +5,10 @@
     <Column>
         <Container>
             <_color value="FF00FF"/>
-            <Text data="This is first Sparta"/>
+            <Text data="This is first Sparta" textScaleFactor="3.3" maxLines="8"/>
         </Container>
 
-        <Text>
+        <Text softWrap="true">
             <_data value="This is Sparta Two!"/>
         </Text>
 
