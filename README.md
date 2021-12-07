@@ -18,7 +18,7 @@ generating most of needed code to perform transform from xml to widgets.
 
 ## Getting started
 
-It is worth to look first into examples to get general understanding what's going on. There are two
+It is worth to look first into examples to get general overview what's going on. There are two
 major phases of working with YALB:
 - Writing xml files with layouts and generating code using builder.
 - Integration of engine with application (delivering runtime data, providers or other needed things).
@@ -28,7 +28,7 @@ if you don't add any new elements (no new node types, no new attributes) just re
 then there is no need to perform build. Next sections guide you through those phases.
 
 ### First layout
-Create empty flutter app and put simple layout named ```layout.xml``` into assets folder:
+Create empty flutter app and put simple layout named ```layout.xml``` into ```assets``` folder:
 ```xml
   <Container>
     <_color a="255" r="100" g="100" b="100"/>
@@ -61,7 +61,7 @@ import 'widget_repository.g.dart';
 ```
 
 Before we use other widget builder, we need to register all needed code helpers. To do so add
-following line into your main:
+following line into your ```main``` function:
 
 ```dart
 void main() {
@@ -71,15 +71,15 @@ void main() {
 ```
 
 Now we can move to ```_MyHomePageState```, we add filed in which we hold builder, and modify
-```build``` method to use YAML builder for part of widgets tree. We keep ```Scaffold``` with title
-but inject layout into body. To perform this we need helper function ```_loadFileContent``` which
+```build``` method, to use YAML builder for part of widgets tree. We keep ```Scaffold``` with title
+but, inject layout into body. To perform this we need helper function ```_loadFileContent``` which
 loads xml from asset into string:
 ```dart
   Future<String> _loadFileContent(String path) {
     return rootBundle.loadString(path);
   }
 ```
-This method can be used with ```FutureBuilder``` along with builder:
+This method can be used with ```FutureBuilder``` along with YALB builder:
 ```dart
 FutureBuilder<String>(
     future: _loadFileContent("assets/layout.xml"),          //Loads a xml
@@ -122,6 +122,10 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 ```
 Now it's time to run it and see if it works!
+
+## Registry.
+
+TODO: What, why, where?
 
 ## How builder works?
 
@@ -237,7 +241,7 @@ node. But keep in mind that child must be a widget! Look at this:
   </Container>
 ```
 Container has a single child: Text. But Text doesn't have any child! If some widget can have
-children it might look like:
+multiple children it might look like:
 ```xml
   <Column>
      <Text data="line 1"/>
