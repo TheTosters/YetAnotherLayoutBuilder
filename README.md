@@ -51,9 +51,77 @@ dart run build_runner build
 Done, you should see new file named ```widget_repository.g.dart``` in your ```lib``` folder.
 
 ### Bind layout to code
+After creating empty flutter app you should have single stateful widget with single state generated.
+In our example class with this state is called ```_MyHomePageState```, we need to do few things to
+use YALB in it. First let's add imports at top of file:
 
-TODO:
+```dart
+import 'package:yet_another_layout_builder/yet_another_layout_builder.dart' as yalb;
+import 'widget_repository.g.dart';
+```
 
+Before we use other widget builder, we need to register all needed code helpers. To do so add
+following line into your main:
+
+```dart
+void main() {
+  registerWidgetBuilders();     //<---- add this line
+  runApp(const MyApp());
+}
+```
+
+Now we can move to ```_MyHomePageState```, we add filed in which we hold builder, and modify
+```build``` method to use YAML builder for part of widgets tree. We keep ```Scaffold``` with title
+but inject layout into body. To perform this we need helper function ```_loadFileContent``` which
+loads xml from asset into string:
+```dart
+  Future<String> _loadFileContent(String path) {
+    return rootBundle.loadString(path);
+  }
+```
+This method can be used with ```FutureBuilder``` along with builder:
+```dart
+FutureBuilder<String>(
+    future: _loadFileContent("assets/layout.xml"),          //Loads a xml
+    builder: (context, snapshot) {
+      if (snapshot.hasData) {
+        builder ??= yalb.LayoutBuilder(snapshot.data!, {}); //Create builder if it not exists
+        return builder!.build(context);                     //Performs build of widget tree
+      }
+      return Container();
+    })
+```
+
+Final code should look similar to:
+
+```dart
+class _MyHomePageState extends State<MyHomePage> {
+  yalb.LayoutBuilder? builder;
+
+  Future<String> _loadFileContent(String path) {
+    return rootBundle.loadString(path);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          title: Text(widget.title),
+        ),
+        body: FutureBuilder<String>(
+            future: _loadFileContent("assets/layout.xml"),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                builder ??= yalb.LayoutBuilder(
+                    snapshot.data!, {"MyText": "This is my text"});
+                return builder!.build(context);
+              }
+              return Container();
+            }));
+  }
+}
+```
+Now it's time to run it and see if it works!
 
 ## How builder works?
 
