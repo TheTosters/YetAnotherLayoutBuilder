@@ -117,20 +117,19 @@ class Registry {
 
   static void addValueBuilder(
       String parentName, String elementName, ConstBuilder builder) {
-    final item = LayoutBuilderItem(elementName, _constValueDelegate,
-        builder, _nopProcessor, ParsedItemType.constValue);
+    final item = LayoutBuilderItem(elementName, _constValueDelegate, builder,
+        _nopProcessor, ParsedItemType.constValue);
     item.parentName = parentName;
     _items.update(elementName, (existing) => existing.next = item,
         ifAbsent: () => item);
   }
-
 }
 
 class LayoutBuildCoordinator extends BuildCoordinator {
   final Map<String, dynamic> objects;
 
   LayoutBuildCoordinator(this.objects);
-  
+
   @override
   PNDelegate? delegate(String name) {
     if (name.startsWith("_")) {
@@ -146,7 +145,8 @@ class LayoutBuildCoordinator extends BuildCoordinator {
       final name = delegateName.substring(1);
       //Note: don't call item.dataProcessor for this type of node
       //decision is that builder handle processing + building in one go!
-      return ConstData(parentNodeName, name, _findConstDataBuilder(name), rawData);
+      return ConstData(
+          parentNodeName, name, _findConstDataBuilder(name), rawData);
     }
     final item = Registry._items[delegateName]!;
     WidgetData result = WidgetData(item.builder, item.dataProcessor(rawData));
@@ -177,7 +177,7 @@ class LayoutBuildCoordinator extends BuildCoordinator {
 
   LayoutBuilderItem? _findBuilderItem(String parent, String name) {
     var item = Registry._items[name];
-    while(item != null) {
+    while (item != null) {
       if (item.parentName == parent) {
         return item;
       }

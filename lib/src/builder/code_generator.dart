@@ -4,8 +4,10 @@ import 'package:logging/logging.dart';
 import 'package:yet_another_layout_builder/src/builder/code_snippets.dart';
 import 'package:yet_another_layout_builder/src/builder/reflection_writer.dart';
 
+import 'class_finders.dart';
 import 'found_items.dart';
 import 'progress_collector.dart';
+import 'dart_extensions.dart';
 
 class CodeGenerator {
   final Iterable<FoundWidget> widgets;
@@ -14,33 +16,41 @@ class CodeGenerator {
   late bool _childHandled;
   final CodeSnippetsWriter codeExt = CodeSnippetsWriter();
   final StringBuffer sb = StringBuffer();
+  final ClassConstructorsCollector classCollector;
 
-  CodeGenerator(
-      Iterable<FoundWidget> widgets, this.progressCollector, this.logger)
+  CodeGenerator(Iterable<FoundWidget> widgets, this.classCollector,
+      this.progressCollector, this.logger)
       : widgets = widgets.sorted((a, b) => a.name.compareTo(b.name));
 
   String generate() {
     sb.clear();
+    Set<String> constValClasses = {};
     _generateNotice();
     _generateProgressLog();
     _generateImports();
     for (var widget in widgets) {
-      if (widget.constructor != null) {
+      //TODO: Currently support only one constructor for widgets
+      final constructor = _widgetCtrFor(widget.name);
+      if (constructor != null) {
         _generateBuilderMethod(widget);
-        widget.useCustomDataProcessor = widget.constructor?.parameters.any(
-                (p) =>
-                    widget.attributes.contains(p.name) &&
-                    p.type.element?.kind == ElementKind.ENUM) ??
-            false;
-        _generateDataProcessorMethod(widget);
+        widget.useCustomDataProcessor = constructor.parameters.any((p) =>
+            widget.attributes.contains(p.name) &&
+            p.type.element?.kind == ElementKind.ENUM);
+        _generateDataProcessorMethod(widget, constructor);
       }
-      for (var constVal in widget.constItems.values) {
-        _generateConstBuilderMethod(constVal);
+      for (var constVal in widget.constItems) {
+        //_generateConstBuilderMethod(constVal);
+        constValClasses.add(constVal.typeName);
       }
     }
+    _generateConstValueMethods(constValClasses);
     codeExt.writeSnippets(sb);
     _generateRegisterMethod();
     return sb.toString();
+  }
+
+  ConstructorElement? _widgetCtrFor(String typeName) {
+    return classCollector.constructorsFor(typeName).firstOrNull?.constructor;
   }
 
   void _generateImports() {
@@ -54,28 +64,36 @@ class CodeGenerator {
     sb.writeln("void registerWidgetBuilders() {");
     for (var widget in widgets) {
       _writeWidgetBuilderRegisterCall(widget);
-      for (var constVal in widget.constItems.values) {
+      for (var constVal in widget.constItems) {
         _writeConstBuilderRegisterCall(widget.name, constVal);
       }
     }
     sb.writeln("}\n");
   }
 
-  void _writeConstBuilderRegisterCall(
-      String parent, FoundConst constVal) {
-    if (constVal.constructor != null) {
+  void _writeConstBuilderRegisterCall(String parent, FoundConst constVal) {
+    if (classCollector.hasConstructor(constVal.typeName)) {
       sb.write('  Registry.addValueBuilder("');
       sb.write(parent);
       sb.write('", "');
       sb.write(constVal.destAttrib);
       sb.write('", ');
-      _writeContValBuilderName(constVal);
+      if (_isBuilderSelectorNeeded(constVal.typeName)) {
+        _writeContValSelectorName(constVal.typeName);
+      } else {
+        _writeConstValBuilderName(constVal.typeName);
+      }
       sb.writeln(");");
     }
   }
 
+  bool _isBuilderSelectorNeeded(String typeName) {
+    final val = classCollector.constructorsFor(typeName);
+    return val.length > 1;
+  }
+
   void _writeWidgetBuilderRegisterCall(FoundWidget widget) {
-    if (widget.constructor != null) {
+    if (_widgetCtrFor(widget.name) != null) {
       sb.write("  Registry.");
       sb.write(_determineAddMethod(widget));
       sb.write('("');
@@ -92,16 +110,23 @@ class CodeGenerator {
 
   void _writeWidgetBuilderName(FoundWidget widget) {
     sb.write("_");
-    sb.write(widget.name.substring(0, 1).toLowerCase());
-    sb.write(widget.name.substring(1));
+    sb.write(widget.name.deCapitalize());
     sb.write("BuilderAutoGen");
   }
 
-  void _writeContValBuilderName(FoundConst constVal) {
+  void _writeConstValBuilderName(String typeName, {int? index}) {
     sb.write("_");
-    sb.write(constVal.typeName.substring(0, 1).toLowerCase());
-    sb.write(constVal.typeName.substring(1));
+    sb.write(typeName.deCapitalize());
+    if (index != null) {
+      sb.write(index);
+    }
     sb.write("ValBuilderAutoGen");
+  }
+
+  void _writeContValSelectorName(String typeName) {
+    sb.write("_");
+    sb.write(typeName.deCapitalize());
+    sb.write("ValSelectorAutoGen");
   }
 
   String _determineAddMethod(FoundWidget widget) {
@@ -118,8 +143,9 @@ class CodeGenerator {
   }
 
   void _generateBuilderMethod(FoundWidget widget) {
-    _verifyRequiredCtrParams(widget);
-    final rw = ReflectionWriter(widget, codeExt, sb);
+    final widgetCtr = classCollector.constructorsFor(widget.name).first;
+    _verifyRequiredCtrParams(widgetCtr);
+    final rw = ReflectionWriter(widgetCtr, codeExt, sb);
     _childHandled = false;
 
     //function signature
@@ -135,7 +161,7 @@ class CodeGenerator {
 
     //Special case for parenthood
     if (!_childHandled && widget.parentship != Parentship.noChildren) {
-      _handleChildren(widget);
+      _handleChildren(widget, widgetCtr);
     }
     sb.writeln("  );");
 
@@ -143,14 +169,14 @@ class CodeGenerator {
     sb.writeln("}\n");
   }
 
-  void _handleChildren(FoundWidget widget) {
+  void _handleChildren(FoundWidget widget, Constructable widgetCtr) {
     late String expected;
     if (widget.parentship == Parentship.oneChild) {
       expected = "child";
     } else if (widget.parentship == Parentship.multipleChildren) {
       expected = "children";
     }
-    final param = widget.constructor?.parameters
+    final param = widgetCtr.constructor?.parameters
         .firstWhereOrNull((p) => p.name == expected);
     if (param == null) {
       final reason = "Widget ${widget.name} has $expected in xml, but"
@@ -158,7 +184,7 @@ class CodeGenerator {
       logger.severe(reason);
       throw Exception(reason);
     }
-    final rw = ReflectionWriter(widget, codeExt, sb);
+    final rw = ReflectionWriter(widgetCtr, codeExt, sb);
     rw.writeCtrParam(param, _writeAttribGetter);
   }
 
@@ -211,8 +237,7 @@ class CodeGenerator {
     }
   }
 
-  void _writeCommentList(
-      String title, int indent, Iterable? list) {
+  void _writeCommentList(String title, int indent, Iterable? list) {
     if (list != null && list.isNotEmpty) {
       _writeComment(title, indent);
       for (var file in list) {
@@ -228,8 +253,8 @@ class CodeGenerator {
       for (var file in list) {
         _writeComment(file.toString(), 2);
 
-        final tmp = progressCollector?.data[ProgressCollector
-            .keyProcessedNodes];
+        final tmp =
+            progressCollector?.data[ProgressCollector.keyProcessedNodes];
         final nodes = tmp?[file.toString()];
         _writeCommentList("Processed nodes:", 3, nodes);
 
@@ -250,12 +275,13 @@ class CodeGenerator {
     }
   }
 
-  void _generateDataProcessorMethod(FoundWidget widget) {
+  void _generateDataProcessorMethod(
+      FoundWidget widget, ConstructorElement ctr) {
     if (widget.useCustomDataProcessor) {
       sb.write("dynamic ");
       _writeProcessorName(widget);
       sb.writeln("(Map<String, dynamic> inData) {");
-      for (var p in widget.constructor!.parameters) {
+      for (var p in ctr.parameters) {
         bool hasParam = widget.attributes.contains(p.name);
         if (hasParam && p.type.element?.kind == ElementKind.ENUM) {
           //eg.: inData.updateEnum("textAlign", TextAlign.values);
@@ -275,19 +301,20 @@ class CodeGenerator {
 
   void _writeProcessorName(FoundWidget widget) {
     sb.write("_");
-    sb.write(widget.name.substring(0, 1).toLowerCase());
-    sb.write(widget.name.substring(1));
+    sb.write(widget.name.deCapitalize());
     sb.write("DataProcessor");
   }
 
-  void _generateConstBuilderMethod(FoundConst constVal) {
+  void _generateConstBuilderMethod(Constructable constVal, {int? index}) {
     if (constVal.constructor != null) {
       final rw = ReflectionWriter(constVal, codeExt, sb);
       _verifyRequiredCtrParams(constVal);
+
       //function signature
-      sb.write(constVal.typeName);
+      sb.write(constVal.constructor!.enclosingElement.name);
       sb.write(" ");
-      _writeContValBuilderName(constVal);
+      _writeConstValBuilderName(constVal.constructor!.enclosingElement.name,
+          index: index);
       sb.writeln("(String parent, Map<String, dynamic> data) {");
 
       //body
@@ -314,5 +341,65 @@ class CodeGenerator {
         }
       }
     }
+  }
+
+  void _generateConstValueMethods(Set<String> constValClasses) {
+    for (var typeName in constValClasses) {
+      final constructables = classCollector.constructorsFor(typeName);
+      //NOTE: Skipp generation for length == 0
+      if (constructables.length == 1) {
+        _generateConstBuilderMethod(constructables[0]);
+      } else if (constructables.length > 1) {
+        int index = 0;
+        for (var c in constructables) {
+          _generateConstBuilderMethod(c, index: index);
+          index++;
+        }
+        _generateConstSelectorMethod(constructables);
+      }
+    }
+  }
+
+  void _generateConstSelectorMethod(List<Constructable> constructables) {
+    //function signature
+    Constructable tmp = constructables.first;
+    sb.write(tmp.constructor!.enclosingElement.name);
+    sb.write(" ");
+    _writeContValSelectorName(tmp.constructor!.enclosingElement.name);
+    sb.writeln("(String parent, Map<String, dynamic> data) {");
+
+    //body
+    int index = 0;
+    sb.write(" ");
+    for (var ctr in constructables) {
+      sb.write(" if (");
+      _writeStringSet(ctr.attributes);
+      sb.writeln(".containsAll(data.keys)) {");
+      sb.write("    return ");
+      _writeConstValBuilderName(ctr.constructor!.enclosingElement.name,
+          index: index);
+      sb.write("(parent, data);\n  } else ");
+      index++;
+    }
+    //function end
+    sb.write('{\n    throw Exception("Unknown constructor for class ');
+    sb.write(tmp.constructor!.enclosingElement.name);
+    sb.writeln(' data: \$data");');
+    sb.writeln("  }\n}\n");
+  }
+
+  void _writeStringSet(Set<String> set) {
+    bool needComa = false;
+    sb.write("{");
+    for (var s in set) {
+      if (needComa) {
+        sb.write(", ");
+      }
+      needComa = true;
+      sb.write('"');
+      sb.write(s);
+      sb.write('"');
+    }
+    sb.write("}");
   }
 }

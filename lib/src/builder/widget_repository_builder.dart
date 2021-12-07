@@ -2,11 +2,12 @@ import 'package:build/build.dart';
 import 'package:glob/glob.dart';
 import 'package:path/path.dart' as path;
 import 'package:logging/logging.dart';
+import 'package:yet_another_layout_builder/src/builder/dart_extensions.dart';
 
 import 'found_items.dart';
 import 'path_matcher.dart';
 import 'progress_collector.dart';
-import 'widget_class_validator.dart';
+import 'class_finders.dart';
 import 'xml_analyzer.dart';
 import 'code_generator.dart';
 
@@ -49,11 +50,12 @@ class WidgetRepositoryBuilder implements Builder {
       xmlAnalyzer.process(xmlStr, input.path);
     }
 
-    await _resolveClasses(buildStep, xmlAnalyzer.items);
+    final widgets = xmlAnalyzer.widgets;
+    final classCollector = await _resolveClasses(buildStep, widgets);
 
     final output = _outputFile(buildStep);
     final codeGen =
-        CodeGenerator(xmlAnalyzer.items.values, progressCollector, logger);
+        CodeGenerator(widgets, classCollector, progressCollector, logger);
     //this might throw exception preventing console info if success
     final srcTxt = codeGen.generate();
     //this should be printed only on success
@@ -65,35 +67,69 @@ class WidgetRepositoryBuilder implements Builder {
     return buildStep.writeAsString(output, srcTxt);
   }
 
-  Future<void> _resolveClasses(BuildStep buildStep, Map<String, FoundWidget> widgets) async {
-    final validator = WidgetClassValidator(logger);
-    await validator.prepare(buildStep.resolver);
-    final constValidator = ConstValClassValidator(logger);
-    await constValidator.prepare(buildStep.resolver);
-
-    validator.process(widgets);
-
-    //TODO: This need to be improved for see comment in
-    // xmlAnalyzer._combineConstItems
-    Map<String, Constructable> allConsts = {};
-    for(var widget in widgets.values) {
-      for(var c in widget.constItems.values) {
-        allConsts.putIfAbsent(c.typeName, () => Constructable.from(c));
+  Future<ClassConstructorsCollector> _resolveClasses(
+      BuildStep buildStep, List<FoundWidget> widgets) async {
+    //TODO: There is still problem with widgets which will have different ctrs
+    List<Resolvable> allConsts = [];
+    List<Resolvable> allWidgets = [];
+    for (var widget in widgets) {
+      allWidgets.add(Resolvable(widget.name, widget.attributes));
+      for (var c in widget.constItems) {
+        allConsts.add(Resolvable(c.typeName, c.attributes));
       }
     }
-    constValidator.process(allConsts);
-    print("Const count: ${allConsts.length}, $allConsts");
 
-    //propagate resolved constructors to widgets
-    for(var widget in widgets.values) {
-      for (var c in widget.constItems.values) {
-        c.constructor = allConsts[c.typeName]!.constructor;
+    final collector = ClassConstructorsCollector();
+
+    final widgetResolver = WidgetClassFinder(collector, logger);
+    await widgetResolver.prepare(buildStep.resolver);
+    widgetResolver.process(allWidgets);
+
+    final constResolver = ConstValClassFinder(collector, logger);
+    await constResolver.prepare(buildStep.resolver);
+    constResolver.process(allConsts);
+
+    _widgetsCompact(widgets, collector);
+
+    //TODO: Support this in future?
+    for (var w in widgets) {
+      if (collector.constructorsFor(w.name).length > 1) {
+        final reason =
+            "${w.name}: Multiple constructors for widget not supported";
+        logger.severe(reason);
+        throw Exception(reason);
       }
     }
+
+    return collector;
   }
 
   @override
   final buildExtensions = const {
     r"$lib$": [outputFileName]
   };
+
+  //Removes widgets for which constructor was not found
+  //Removes repeats of this same widget type
+  //combine const values for same widget type
+  //combine attributes for same widget type
+  //TODO: This method should be in other class, not sure which one...
+  void _widgetsCompact(
+      List<FoundWidget> widgets, ClassConstructorsCollector collector) {
+    widgets.removeWhere((w) => !collector.hasConstructor(w.name));
+    int index = 0;
+    while (index < widgets.length) {
+      FoundWidget widget = widgets[index];
+      for (int t = widgets.length - 1; t > index; t--) {
+        final other = widgets[t];
+        if (widget.name == other.name) {
+          widget.constItems.addAllIfAbsent(other.constItems,
+              (inList, toAdd) => inList.destAttrib == toAdd.destAttrib);
+          widget.attributes.addAll(other.attributes);
+          widgets.removeAt(t);
+        }
+      }
+      index++;
+    }
+  }
 }

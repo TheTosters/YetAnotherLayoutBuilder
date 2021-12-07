@@ -8,7 +8,7 @@ import 'widget_repository.g.dart';
 
 void main() {
   registerWidgetBuilders();
-  //registerItems();
+  registerItems();
   runApp(const MyApp());
 }
 

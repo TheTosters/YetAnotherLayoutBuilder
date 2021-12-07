@@ -31,7 +31,7 @@ class PathMatcher {
       return nameOnly.contains(name);
     }
 
-    for(var m in pathRelated) {
+    for (var m in pathRelated) {
       if (path.endsWith(m)) {
         return true;
       }

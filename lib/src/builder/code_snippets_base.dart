@@ -2,14 +2,13 @@ part of "code_snippets.dart";
 
 //This is turbo ugly, but I've no better idea yet ;(
 const Map<CodeSnippets, String> _codeSnippetsPool = {
-  CodeSnippets.mapStringToEnum : r'''
+  CodeSnippets.mapStringToEnum: r'''
   void updateEnum<T>(String key, List<T> values) {
     if (containsKey(key)) {
       final tmp = "${T.toString()}.${this[key]}";
       this[key] = values.firstWhere((d) => d.toString() == tmp);
     }
   }''',
-
   CodeSnippets.mapStringToInt: r'''
     void updateInt(String key) {
     if (containsKey(key)) {
@@ -22,12 +21,10 @@ const Map<CodeSnippets, String> _codeSnippetsPool = {
       updateInt(s);
     }
   }''',
-
   CodeSnippets.parseInt: r'''
 int? _improvedIntParse(String value) {
   return int.tryParse(value) ?? int.parse(value, radix: 16);
 }''',
-
   CodeSnippets.parseIntForColor: r'''
 int? _parseIntForColor(String v) {
   if (v.startsWith("#")) {

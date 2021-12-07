@@ -1,9 +1,12 @@
 <Container>
     <_color a="255" r="233" g="100" b="0"/>
-<!--    <_color value="FF00FF"/>-->
+
     <_padding __EdgeInsets="" value="5"/>
     <Column>
-        <Text data="This is first Sparta"/>
+        <Container>
+            <_color value="FF00FF"/>
+            <Text data="This is first Sparta"/>
+        </Container>
 
         <Text>
             <_data value="This is Sparta Two!"/>

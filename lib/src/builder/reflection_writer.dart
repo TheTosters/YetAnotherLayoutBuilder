@@ -1,9 +1,9 @@
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:collection/collection.dart';
 import 'package:analyzer/dart/element/element.dart';
-import 'package:yet_another_layout_builder/src/builder/found_items.dart';
 
 import 'annotations.dart';
+import 'class_finders.dart';
 import 'code_snippets.dart';
 
 typedef AttribAccessWriter = void Function(String, bool);
@@ -39,7 +39,6 @@ class ReflectionWriter {
     codeExt.needFunctionSnippets(convFun?.funcExt ?? const []);
     codeExt.needMapExtension(convFun?.mapExt ?? const []);
 
-    print("${p.name} => ${p.metadata}");
     sb.write("    "); //lvl 2 indent
     bool canBeNull = p.type.nullabilitySuffix == NullabilitySuffix.question;
     if (p.isPositional) {

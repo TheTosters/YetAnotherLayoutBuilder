@@ -41,14 +41,14 @@ class NeededExtensionsCollector {
 
   /// Generic access, use with care! Don't mess _mapExt and _functions
   void needFunctionSnippets(Iterable<String> snippetIds) {
-    for(var id in snippetIds) {
+    for (var id in snippetIds) {
       _functions.add(strToCodeSnippets(id));
     }
   }
 
   /// Generic access, use with care! Don't mess _mapExt and _functions
   void needMapExtension(Iterable<String> snippetIds) {
-    for(var id in snippetIds) {
+    for (var id in snippetIds) {
       _mapExt.add(strToCodeSnippets(id));
     }
   }
@@ -60,7 +60,6 @@ class NeededExtensionsCollector {
 }
 
 class CodeSnippetsWriter extends NeededExtensionsCollector {
-
   void writeSnippets(StringBuffer sb) {
     for (var id in _functions) {
       sb.writeln(_codeSnippetsPool[id]);
