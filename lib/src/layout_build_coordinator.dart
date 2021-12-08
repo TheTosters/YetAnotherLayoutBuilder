@@ -5,6 +5,10 @@ import 'package:processing_tree/processing_tree.dart';
 
 import '../yet_another_layout_builder.dart';
 
+part "delegates.dart";
+part "processors.dart";
+part "value_builders.dart";
+
 typedef DelegateDataProcessor = dynamic Function(Map<String, dynamic> inData);
 typedef WidgetBuilder = material.Widget Function(WidgetData data);
 typedef ConstBuilder = dynamic Function(
@@ -78,54 +82,6 @@ class LayoutBuilderItem {
 
   LayoutBuilderItem(this.elementName, this.delegate, this.builder,
       this.dataProcessor, this.itemType);
-}
-
-dynamic _nopProcessor(Map<String, dynamic> inData) {
-  return inData;
-}
-
-/// Const Value Builder for handling String const value nodes
-///
-/// Should be used for nodes which start with '_' and considered as String
-/// data node which should be converted into data in parent for example
-/// ```xml
-/// <Text>
-///   <_data text="this is text"/>
-/// </Text>
-/// ```
-/// This builder can be used for '_data' node from above example. It supports
-/// attribute which can be named _value_, _data_ or _text_
-dynamic _constValueStringBuilder(String parent, Map<String, dynamic> data) {
-  return data["value"] ?? data["data"] ?? data["text"];
-}
-
-Action _widgetProducerDelegate(dynamic context, dynamic data) {
-  LayoutBuildContext lbc = context;
-  final WidgetData wData = data;
-  wData.buildContext = lbc.buildContext;
-  wData.children = null;
-  lbc.widget = wData.builder(wData);
-  lbc.widgets.add(lbc.widget!);
-  return Action.proceed;
-}
-
-Action _constValueDelegate(dynamic context, dynamic data) {
-  KeyValue ctx = context;
-  final ConstData cData = data;
-  ctx.key = cData.attribName;
-  ctx.value = cData.builder(cData.parentName, cData.data);
-  return Action.proceed;
-}
-
-Action _widgetConsumeAndProduceDelegate(dynamic context, dynamic data) {
-  LayoutBuildContext lbc = context;
-  final WidgetData wData = data;
-  wData.buildContext = lbc.buildContext;
-  wData.children = List.from(lbc.widgets, growable: false);
-  lbc.widget = wData.builder(wData);
-  lbc.widgets.clear();
-  lbc.widgets.add(lbc.widget!);
-  return Action.proceed;
 }
 
 class Registry {
