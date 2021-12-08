@@ -173,48 +173,47 @@ class LayoutBuildCoordinator extends BuildCoordinator {
 
   @override
   dynamic delegateData(String delegateName, Map<String, dynamic> rawData) {
-    _resolveExternals(rawData);
     if (delegateName.startsWith("_")) {
+      _resolveExternals(rawData, false);
       final name = delegateName.substring(1);
       //Note: don't call item.dataProcessor for this type of node
       //decision is that builder handle processing + building in one go!
       return ConstData(
           parentNodeName, name, _findConstDataBuilder(name), rawData);
     }
+    _resolveExternals(rawData, true);
     final item = Registry._items[delegateName]!;
     WidgetData result = WidgetData(item.builder, item.dataProcessor(rawData));
     return result;
   }
 
-  void _resolveExternals(Map<String, dynamic> rawData) {
+  void _resolveExternals(Map<String, dynamic> rawData, bool track) {
     //Expect that values in rawData is always String at this moment
     rawData.updateAll((key, value) {
       if (value.startsWith("\$")) {
         //resolve as string
-        final objName = value.substring(1);
-        _addToUsageMap(objName, key, rawData);
-        if (!objects.containsKey(objName)) {
-          print("WARN xml refers to key $value, but it's not given in objects");
-        }
-        return objects[objName].toString();
+        return _processResolvable(value.substring(1), key, rawData, track)
+            .toString();
+
       } else if (value.startsWith("@")) {
         //resolve as object itself
-        final objName = value.substring(1);
-        _addToUsageMap(objName, key, rawData);
-        if (!objects.containsKey(objName)) {
-          print("WARN xml refers to key $value, but it's not given in objects");
-        }
-        return objects[objName];
+        return _processResolvable(value.substring(1), key, rawData, track);
       }
       return value;
     });
   }
 
-  void _addToUsageMap(
-      String objName, String inMapKey, Map<String, dynamic> destMap) {
-    objectUsageMap.update(
-        objName, (value) => TrackedValue(inMapKey, destMap, value),
-        ifAbsent: () => TrackedValue(inMapKey, destMap, null));
+  dynamic _processResolvable(String objName, String inMapKey,
+      Map<String, dynamic> destMap, bool trackResolved) {
+    if (trackResolved) {
+      objectUsageMap.update(
+          objName, (value) => TrackedValue(inMapKey, destMap, value),
+          ifAbsent: () => TrackedValue(inMapKey, destMap, null));
+    }
+    if (!objects.containsKey(objName)) {
+      print("WARN xml refers to key $objName, but it's not given in objects");
+    }
+    return objects[objName];
   }
 
   @override
