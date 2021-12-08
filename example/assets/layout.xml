@@ -1,23 +1,13 @@
 <Container>
     <_color a="255" r="233" g="100" b="0"/>
-
     <_padding __EdgeInsets="" value="5"/>
     <Column>
-        <Container>
-            <_color value="FF00FF"/>
-            <Text data="This is first Sparta" textScaleFactor="3.3" maxLines="8"/>
-        </Container>
-
-        <Text softWrap="true">
-            <_data value="This is Sparta Two!"/>
-        </Text>
-
-        <Text>
-            <_data value="$MyText"/>
-        </Text>
-
-        <Text data="$MyText" textAlign="right"/>
-
+        <TextButton onPressed="@callback" style="@style">
+            <Text data="Button"/>
+        </TextButton>
+        <YalbBlock widget="@cir"/>
+        <YalbBlock provider="@textP"/>
+        <Text data="$MyText"/>
         <!-- Widget builder generation for node Fido will be omitted due configuration in build.yaml,
             but Fido children will be processed, if this is not expected, child nodes must be also
             added to ignore list. -->

@@ -8,6 +8,7 @@ import '../yet_another_layout_builder.dart';
 part "delegates.dart";
 part "processors.dart";
 part "value_builders.dart";
+part "nodes.dart";
 
 typedef DelegateDataProcessor = dynamic Function(Map<String, dynamic> inData);
 typedef WidgetBuilder = material.Widget Function(WidgetData data);
@@ -85,7 +86,7 @@ class LayoutBuilderItem {
 }
 
 class Registry {
-  static final Map<String, LayoutBuilderItem> _items = {};
+  static final Map<String, LayoutBuilderItem> _items = _registerSpecialNodes();
 
   static void addWidgetBuilder(String elementName, WidgetBuilder builder,
       {DelegateDataProcessor dataProcessor = _nopProcessor}) {

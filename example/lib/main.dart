@@ -52,8 +52,21 @@ class _MyHomePageState extends State<MyHomePage> {
             future: _loadFileContent("assets/layout.xml"),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-                builder ??= yalb.LayoutBuilder(
-                    snapshot.data!, {"MyText": "This is my text"});
+                builder ??= yalb.LayoutBuilder(snapshot.data!, {
+                  "MyText": "My Text 1",
+                  "pad": EdgeInsets.all(22),
+                  "cir": CircularProgressIndicator(),
+                  "textP": (d) => Text("Provided"),
+                  "callback": () {
+                    setState((){
+                      builder!.updateObjects({"MyText" : "Second"});
+                      print("ok");
+                    });
+                  },
+                  "style":  TextButton.styleFrom(
+                    textStyle: const TextStyle(fontSize: 20),
+                  )
+                });
                 return builder!.build(context);
               }
               return Container();
