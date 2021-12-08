@@ -10,9 +10,8 @@ Action _widgetProducerDelegate(dynamic context, dynamic data) {
   LayoutBuildContext lbc = context;
   final WidgetData wData = data;
   wData.buildContext = lbc.buildContext;
-  wData.children = null;
   lbc.widget = wData.builder(wData);
-  lbc.widgets.add(lbc.widget!);
+  wData.parentChildren!.add(lbc.widget!);
   return Action.proceed;
 }
 
@@ -26,10 +25,8 @@ Action _widgetConsumeAndProduceDelegate(dynamic context, dynamic data) {
   LayoutBuildContext lbc = context;
   final WidgetData wData = data;
   wData.buildContext = lbc.buildContext;
-  wData.children = List.from(lbc.widgets, growable: false);
   lbc.widget = wData.builder(wData);
-  lbc.widgets.clear();
-  lbc.widgets.add(lbc.widget!);
+  wData.parentChildren!.add(lbc.widget!);
   return Action.proceed;
 }
 

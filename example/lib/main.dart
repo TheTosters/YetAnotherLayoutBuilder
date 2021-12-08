@@ -57,6 +57,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   "pad": EdgeInsets.all(22),
                   "cir": CircularProgressIndicator(),
                   "textP": (d) => Text("Provided"),
+                  "listItemBuilder": _listItemBuilder,
                   "callback": () {
                     setState((){
                       builder!.updateObjects({"MyText" : "Second"});
@@ -71,5 +72,9 @@ class _MyHomePageState extends State<MyHomePage> {
               }
               return Container();
             }));
+  }
+
+  Widget _listItemBuilder(BuildContext context, int index) {
+    return Container(child: Text("Item $index"), height: 30, width: 100, color: Color(0xFF));
   }
 }

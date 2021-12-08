@@ -1,13 +1,18 @@
-<Container>
+<Container width="300">
     <_color a="255" r="233" g="100" b="0"/>
     <_padding __EdgeInsets="" value="5"/>
     <Column>
         <TextButton onPressed="@callback" style="@style">
             <Text data="Button"/>
         </TextButton>
-        <YalbBlock widget="@cir"/>
-        <YalbBlock provider="@textP"/>
+<!--        <YalbBlock widget="@cir"/>-->
+<!--        <YalbBlock provider="@textP"/>-->
         <Text data="$MyText"/>
+        <Container height="100">
+            <ListView itemBuilder="@listItemBuilder" itemCount="3"/>
+        </Container>
+        <Text data="Text2"/>
+        <Text data="Text3"/>
         <!-- Widget builder generation for node Fido will be omitted due configuration in build.yaml,
             but Fido children will be processed, if this is not expected, child nodes must be also
             added to ignore list. -->

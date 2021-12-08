@@ -6,7 +6,6 @@ import 'layout_build_coordinator.dart';
 class LayoutBuildContext {
   final BuildContext buildContext;
   Widget? widget; //Last returned widget
-  List<Widget> widgets = []; //returned widgets are collected here
 
   LayoutBuildContext(this.buildContext);
 }

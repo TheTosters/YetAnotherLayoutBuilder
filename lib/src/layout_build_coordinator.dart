@@ -2,6 +2,7 @@ import 'dart:collection';
 
 import 'package:flutter/material.dart' as material;
 import 'package:processing_tree/processing_tree.dart';
+import 'package:processing_tree/tree_builder.dart';
 
 import '../yet_another_layout_builder.dart';
 
@@ -29,8 +30,9 @@ class WidgetData {
   List<material.Widget>? children;
   late material.BuildContext buildContext;
   final WidgetBuilder builder;
+  final List<material.Widget>? parentChildren; //our siblings
 
-  WidgetData(this.builder, this.data);
+  WidgetData(this.parentChildren, this.builder, this.data);
 
   operator [](String key) => data[key];
 
@@ -73,6 +75,7 @@ class LayoutBuilderItem {
   final ParsedItemType itemType;
   final PNDelegate delegate;
   final DelegateDataProcessor dataProcessor;
+  final bool isContainer; //can have children?
 
   //This is only meaningful for ConstBuilder
   String? parentName;
@@ -81,8 +84,8 @@ class LayoutBuilderItem {
   // used for building const values
   LayoutBuilderItem? next;
 
-  LayoutBuilderItem(this.elementName, this.delegate, this.builder,
-      this.dataProcessor, this.itemType);
+  LayoutBuilderItem(this.elementName, this.isContainer, this.delegate,
+      this.builder, this.dataProcessor, this.itemType);
 }
 
 class Registry {
@@ -90,24 +93,26 @@ class Registry {
 
   static void addWidgetBuilder(String elementName, WidgetBuilder builder,
       {DelegateDataProcessor dataProcessor = _nopProcessor}) {
-    _items[elementName] = LayoutBuilderItem(elementName,
+    _items[elementName] = LayoutBuilderItem(elementName, false,
         _widgetProducerDelegate, builder, dataProcessor, ParsedItemType.owner);
   }
 
   static void addWidgetContainerBuilder(
-      String elementName, WidgetBuilder builder) {
+      String elementName, WidgetBuilder builder,
+      {DelegateDataProcessor dataProcessor = _nopProcessor}) {
     _items[elementName] = LayoutBuilderItem(
         elementName,
+        true,
         _widgetConsumeAndProduceDelegate,
         builder,
-        _nopProcessor,
+        dataProcessor,
         ParsedItemType.owner);
   }
 
   static void addValueBuilder(
       String parentName, String elementName, ConstBuilder builder) {
-    final item = LayoutBuilderItem(elementName, _constValueDelegate, builder,
-        _nopProcessor, ParsedItemType.constValue);
+    final item = LayoutBuilderItem(elementName, false, _constValueDelegate,
+        builder, _nopProcessor, ParsedItemType.constValue);
     item.parentName = parentName;
     _items.update(elementName, (existing) => existing.next = item,
         ifAbsent: () => item);
@@ -118,6 +123,10 @@ class LayoutBuildCoordinator extends BuildCoordinator {
   final Map<String, dynamic> objects;
   final Map<String, TrackedValue> objectUsageMap = {};
 
+  List<WidgetData> containersData = [
+    WidgetData(null, _dummyBuilder, {})..children = []
+  ];
+
   LayoutBuildCoordinator(this.objects);
 
   @override
@@ -126,6 +135,13 @@ class LayoutBuildCoordinator extends BuildCoordinator {
       return _findConstDataDelegate(name.substring(1));
     }
     return Registry._items[name]!.delegate;
+  }
+
+  @override
+  void step(BuildAction action, String nodeName) {
+    if (action == BuildAction.goLevelUp) {
+      containersData.removeLast();
+    }
   }
 
   @override
@@ -140,7 +156,13 @@ class LayoutBuildCoordinator extends BuildCoordinator {
     }
     _resolveExternals(rawData, true);
     final item = Registry._items[delegateName]!;
-    WidgetData result = WidgetData(item.builder, item.dataProcessor(rawData));
+    final siblings = containersData.last.children;
+    WidgetData result =
+        WidgetData(siblings, item.builder, item.dataProcessor(rawData));
+    if (item.isContainer) {
+      result.children = [];
+      containersData.add(result);
+    }
     return result;
   }
 
@@ -151,7 +173,6 @@ class LayoutBuildCoordinator extends BuildCoordinator {
         //resolve as string
         return _processResolvable(value.substring(1), key, rawData, track)
             .toString();
-
       } else if (value.startsWith("@")) {
         //resolve as object itself
         return _processResolvable(value.substring(1), key, rawData, track);
