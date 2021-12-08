@@ -154,7 +154,8 @@ class CodeGenerator {
 
     //body
     sb.write("  return ");
-    sb.write(widget.name);
+    //sb.write(widget.name);
+    rw.writeCtrName();
     sb.writeln("(");
     rw.writeCtrParams(_writeAttribGetter, noWrappers: true);
 
