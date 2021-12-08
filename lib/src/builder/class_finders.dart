@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
+import 'package:collection/collection.dart';
 import 'package:logging/logging.dart';
 
 class Constructable {
@@ -105,6 +106,9 @@ class WidgetClassFinder extends GenericClassFinder {
   Future<void> prepare(Resolver resolver) async {
     List<Uri> libUri = [
       Uri.parse("package:flutter/widgets.dart"),
+      Uri.parse("package:flutter/material.dart"),
+      Uri.parse("package:flutter/cupertino.dart"),
+      Uri.parse("package:flutter/rendering.dart"),
     ];
     await _prepareLibraries(resolver, libUri);
   }
@@ -217,4 +221,26 @@ class GenericClassFinder {
     }
     return null;
   }
+}
+
+/// Check if given constructor parameter represents [Widget] child/children.
+bool isChildParam(ParameterElement p) {
+  bool r = (p.name == "child") || (p.name == "children");
+  r &= p.type.element?.name == "Widget";
+  return r;
+}
+
+/// Check if given constructor expect Child parameter, if so then return it
+/// otherwise return ```null```
+ParameterElement? findChildParam(ConstructorElement ctr) {
+  final param = ctr.parameters.firstWhereOrNull((p) => p.name == "child");
+  return param?.type.element?.name == "Widget" ? param : null;
+}
+
+/// Check if given constructor expect Children parameter, if so then return it
+/// otherwise return ```null```
+ParameterElement? findChildrenParam(ConstructorElement ctr) {
+  final param = ctr.parameters.firstWhereOrNull((p) => p.name == "children");
+  //It might be wise to check if this is list/iterable of Widget? Maybe...
+  return param;
 }

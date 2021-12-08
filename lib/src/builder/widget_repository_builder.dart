@@ -2,12 +2,12 @@ import 'package:build/build.dart';
 import 'package:glob/glob.dart';
 import 'package:path/path.dart' as path;
 import 'package:logging/logging.dart';
-import 'package:yet_another_layout_builder/src/builder/dart_extensions.dart';
 
 import 'found_items.dart';
 import 'path_matcher.dart';
 import 'progress_collector.dart';
 import 'class_finders.dart';
+import 'widget_helpers.dart';
 import 'xml_analyzer.dart';
 import 'code_generator.dart';
 
@@ -89,7 +89,7 @@ class WidgetRepositoryBuilder implements Builder {
     await constResolver.prepare(buildStep.resolver);
     constResolver.process(allConsts);
 
-    _widgetsCompact(widgets, collector);
+    widgetsCompact(widgets, collector);
 
     //TODO: Support this in future?
     for (var w in widgets) {
@@ -108,28 +108,4 @@ class WidgetRepositoryBuilder implements Builder {
   final buildExtensions = const {
     r"$lib$": [outputFileName]
   };
-
-  //Removes widgets for which constructor was not found
-  //Removes repeats of this same widget type
-  //combine const values for same widget type
-  //combine attributes for same widget type
-  //TODO: This method should be in other class, not sure which one...
-  void _widgetsCompact(
-      List<FoundWidget> widgets, ClassConstructorsCollector collector) {
-    widgets.removeWhere((w) => !collector.hasConstructor(w.name));
-    int index = 0;
-    while (index < widgets.length) {
-      FoundWidget widget = widgets[index];
-      for (int t = widgets.length - 1; t > index; t--) {
-        final other = widgets[t];
-        if (widget.name == other.name) {
-          widget.constItems.addAllIfAbsent(other.constItems,
-              (inList, toAdd) => inList.destAttrib == toAdd.destAttrib);
-          widget.attributes.addAll(other.attributes);
-          widgets.removeAt(t);
-        }
-      }
-      index++;
-    }
-  }
 }

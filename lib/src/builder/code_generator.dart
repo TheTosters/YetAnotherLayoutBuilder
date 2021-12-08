@@ -169,22 +169,31 @@ class CodeGenerator {
   }
 
   void _handleChildren(FoundWidget widget, Constructable widgetCtr) {
-    late String expected;
-    if (widget.parentship == Parentship.oneChild) {
-      expected = "child";
-    } else if (widget.parentship == Parentship.multipleChildren) {
-      expected = "children";
-    }
-    final param = widgetCtr.constructor?.parameters
-        .firstWhereOrNull((p) => p.name == expected);
-    if (param == null) {
-      final reason = "Widget ${widget.name} has $expected in xml, but"
-          " corresponding class doesn't expect it.";
-      logger.severe(reason);
-      throw Exception(reason);
-    }
+    final childParam = findChildParam(widgetCtr.constructor!);
+    final childrenParam = findChildrenParam(widgetCtr.constructor!);
+
     final rw = ReflectionWriter(widgetCtr, codeExt, sb);
-    rw.writeCtrParam(param, true, _writeAttribGetter);
+    String errorPart = "";
+    if (widget.parentship == Parentship.oneChild) {
+      final anyParam = childrenParam ?? childParam;
+      if (anyParam != null) {
+        rw.writeCtrParam(anyParam, true, _writeAttribGetter);
+        return;
+      }
+      errorPart = "single child";
+
+    } else if (widget.parentship == Parentship.multipleChildren) {
+      if (childrenParam != null) {
+        rw.writeCtrParam(childrenParam, true, _writeAttribGetter);
+        return;
+      }
+      errorPart = "multiple children";
+    }
+
+    final reason = "Widget ${widget.name} has $errorPart in xml, but"
+        " corresponding class doesn't expect it.";
+    logger.severe(reason);
+    throw Exception(reason);
   }
 
   void _writeAttribGetter(String name, bool canBeNull) {
@@ -353,7 +362,7 @@ class CodeGenerator {
     for (var p in item.constructor!.parameters) {
       bool paramUsed = item.attributes.contains(p.name);
       if (p.isRequiredPositional || p.isRequiredNamed) {
-        if (!paramUsed) {
+        if (!paramUsed && !isChildParam(p)) {
           final reason = "Constructor ${item.constructor} requires param"
               " ${p.name} but it's not specified in xml!";
           logger.severe(reason);
@@ -434,18 +443,6 @@ class CodeGenerator {
         (p.type.element?.kind == ElementKind.ENUM ||
             supported.contains(p.type.element?.name)));
 
-    for (var p in constructor.parameters) {
-      if (!result &&
-          widget.attributes.contains(p.name) &&
-          p.type.element?.name != "String" &&
-          widget.constItems.none((c) => c.destAttrib == p.name)) {
-        final reason = "${widget.name} parameter $p is nor Enum nor type"
-            " $supported, if this is some ui class please provide it by"
-            " child node attribute.";
-        logger.severe(reason);
-        throw Exception(reason);
-      }
-    }
     return result;
   }
 }

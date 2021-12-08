@@ -5,6 +5,7 @@ import 'package:validators/validators.dart';
 import 'found_items.dart';
 import 'progress_collector.dart';
 import 'dart_extensions.dart';
+import 'widget_helpers.dart';
 
 class XmlAnalyzer {
   final Logger logger;
@@ -48,12 +49,7 @@ class XmlAnalyzer {
     Parentship p = childCount == 0
         ? Parentship.noChildren
         : (childCount == 1 ? Parentship.oneChild : Parentship.multipleChildren);
-    if (widget.parentship == Parentship.noChildren) {
-      widget.parentship = p;
-    } else if (widget.parentship == Parentship.oneChild &&
-        p != Parentship.noChildren) {
-      widget.parentship = p;
-    }
+    combineParentship(widget, p);
   }
 
   Set<String> _collectDirectAttributes(XmlElement xmlElement, String path) {
