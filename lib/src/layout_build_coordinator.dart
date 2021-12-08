@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart' as material;
 import 'package:processing_tree/processing_tree.dart';
 
@@ -28,6 +30,36 @@ class WidgetData {
   operator [](String key) => data[key];
 
   operator []=(String key, dynamic value) => data[key] = value;
+}
+
+class TrackedValueIterator implements Iterator<TrackedValue> {
+  TrackedValue _cur;
+
+  TrackedValueIterator(TrackedValue first)
+      : _cur = TrackedValue("", const {}, first);
+
+  @override
+  TrackedValue get current => _cur;
+
+  @override
+  bool moveNext() {
+    if (_cur.next != null) {
+      _cur = _cur.next!;
+      return true;
+    }
+    return false;
+  }
+}
+
+class TrackedValue with IterableMixin<TrackedValue> {
+  final Map<String, dynamic> destMap;
+  final String keyName;
+  final TrackedValue? next;
+
+  TrackedValue(this.keyName, this.destMap, this.next);
+
+  @override
+  Iterator<TrackedValue> get iterator => TrackedValueIterator(this);
 }
 
 class LayoutBuilderItem {
@@ -127,6 +159,7 @@ class Registry {
 
 class LayoutBuildCoordinator extends BuildCoordinator {
   final Map<String, dynamic> objects;
+  final Map<String, TrackedValue> objectUsageMap = {};
 
   LayoutBuildCoordinator(this.objects);
 
@@ -158,13 +191,30 @@ class LayoutBuildCoordinator extends BuildCoordinator {
     rawData.updateAll((key, value) {
       if (value.startsWith("\$")) {
         //resolve as string
-        return objects[value.substring(1)].toString();
+        final objName = value.substring(1);
+        _addToUsageMap(objName, key, rawData);
+        if (!objects.containsKey(objName)) {
+          print("WARN xml refers to key $value, but it's not given in objects");
+        }
+        return objects[objName].toString();
       } else if (value.startsWith("@")) {
         //resolve as object itself
-        return objects[value.substring(1)];
+        final objName = value.substring(1);
+        _addToUsageMap(objName, key, rawData);
+        if (!objects.containsKey(objName)) {
+          print("WARN xml refers to key $value, but it's not given in objects");
+        }
+        return objects[objName];
       }
       return value;
     });
+  }
+
+  void _addToUsageMap(
+      String objName, String inMapKey, Map<String, dynamic> destMap) {
+    objectUsageMap.update(
+        objName, (value) => TrackedValue(inMapKey, destMap, value),
+        ifAbsent: () => TrackedValue(inMapKey, destMap, null));
   }
 
   @override
