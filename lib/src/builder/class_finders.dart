@@ -4,13 +4,10 @@ import 'package:collection/collection.dart';
 import 'package:logging/logging.dart';
 
 class Constructable {
-  //*************** Filled by xml analyzer
-  /// Attributes found with xml which should be used to determine constructor
-  /// for this item
   final Set<String> attributes;
-
-  //*************** filled by class validator
   ConstructorElement? constructor;
+  bool skipBuilder = false;
+  bool requireDataProcessor = false;
 
   Constructable() : attributes = {};
   Constructable.from(Constructable other)
@@ -46,15 +43,12 @@ class ClassConstructorsCollector {
   final Map<String, List<Constructable>> _constructors = {};
 
   void addConstructor(
-      String typeName, ConstructorElement ctr, Set<String> attributes) {
+      ClassElement clazz, ConstructorElement ctr, Set<String> attributes) {
+    final typeName = clazz.name;
     _constructors.update(typeName, (value) {
-      //Function equals = const SetEquality().equals;
       Constructable? found;
       for (var knownCtr in value) {
-        if (knownCtr.constructor!.name ==
-                ctr.name /*&&
-            equals(knownCtr.constructor!.parameters, ctr.parameters)*/
-            ) {
+        if (knownCtr.constructor!.name == ctr.name) {
           found = knownCtr;
           break;
         }
@@ -62,15 +56,23 @@ class ClassConstructorsCollector {
       if (found == null) {
         value.add(Constructable()
           ..constructor = ctr
+          ..skipBuilder = hasAnnotation(clazz, "SkipWidgetBuilder")
+          ..requireDataProcessor = hasAnnotation(clazz, "GenerateDataProcessor")
           ..attributes.addAll(attributes));
       } else {
         found.attributes.addAll(attributes);
+        found.skipBuilder |= hasAnnotation(clazz, "SkipWidgetBuilder");
+        found.requireDataProcessor |=
+            hasAnnotation(clazz, "GenerateDataProcessor");
       }
       return value;
     },
         ifAbsent: () => [
               Constructable()
                 ..constructor = ctr
+                ..skipBuilder = hasAnnotation(clazz, "SkipWidgetBuilder")
+                ..requireDataProcessor =
+                    hasAnnotation(clazz, "GenerateDataProcessor")
                 ..attributes.addAll(attributes)
             ]);
   }
@@ -105,6 +107,7 @@ class WidgetClassFinder extends GenericClassFinder {
 
   Future<void> prepare(Resolver resolver) async {
     List<Uri> libUri = [
+      Uri.parse("package:yet_another_layout_builder/special_nodes.dart"),
       Uri.parse("package:flutter/widgets.dart"),
       Uri.parse("package:flutter/material.dart"),
       Uri.parse("package:flutter/cupertino.dart"),
@@ -190,7 +193,7 @@ class GenericClassFinder {
         logger.severe(reason);
         throw Exception(reason);
       }
-      collector.addConstructor(clazz.name, item.constructor!, item.attributes);
+      collector.addConstructor(clazz, item.constructor!, item.attributes);
       items.removeAt(index);
     }
     return items.isEmpty;
@@ -198,6 +201,9 @@ class GenericClassFinder {
 
   ConstructorElement? _matchingConstructor(
       ClassElement clazz, Set<String> wanted) {
+    if (hasAnnotation(clazz, "MatchAnyConstructor")) {
+      return clazz.constructors.first;
+    }
     //no params at all
     if (wanted.isEmpty) {
       for (var ctr in clazz.constructors) {
@@ -221,6 +227,17 @@ class GenericClassFinder {
     }
     return null;
   }
+}
+
+ElementAnnotation? findAnnotation(Element e, String annotationName) {
+  final annotation = e.metadata.firstWhereOrNull(
+      (an) => an.element?.enclosingElement?.name == annotationName);
+  return annotation;
+}
+
+bool hasAnnotation(Element e, String annotationName) {
+  return e.metadata
+      .any((an) => an.element?.enclosingElement?.name == annotationName);
 }
 
 /// Check if given constructor parameter represents [Widget] child/children.

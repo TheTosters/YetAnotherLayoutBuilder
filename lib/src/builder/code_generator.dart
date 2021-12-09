@@ -30,11 +30,13 @@ class CodeGenerator {
     _generateImports();
     for (var widget in widgets) {
       //TODO: Currently support only one constructor for widgets
-      final constructor = _widgetCtrFor(widget.name);
+      final constructable = _widgetCtrFor(widget.name);
+      final constructor = constructable?.constructor;
       if (constructor != null) {
         _generateBuilderMethod(widget);
-        widget.useCustomDataProcessor =
+        widget.useCustomDataProcessor = constructable!.requireDataProcessor ||
             _needCustomDataProcessor(widget, constructor);
+
         _generateDataProcessorMethod(widget, constructor);
       }
       for (var constVal in widget.constItems) {
@@ -48,8 +50,8 @@ class CodeGenerator {
     return sb.toString();
   }
 
-  ConstructorElement? _widgetCtrFor(String typeName) {
-    return classCollector.constructorsFor(typeName).firstOrNull?.constructor;
+  Constructable? _widgetCtrFor(String typeName) {
+    return classCollector.constructorsFor(typeName).firstOrNull;
   }
 
   void _generateImports() {
@@ -92,7 +94,8 @@ class CodeGenerator {
   }
 
   void _writeWidgetBuilderRegisterCall(FoundWidget widget) {
-    if (_widgetCtrFor(widget.name) != null) {
+    final widgetCtr = _widgetCtrFor(widget.name);
+    if (widgetCtr?.constructor != null && widgetCtr?.skipBuilder == false) {
       sb.write("  Registry.");
       sb.write(_determineAddMethod(widget));
       sb.write('("');
@@ -142,8 +145,11 @@ class CodeGenerator {
   }
 
   void _generateBuilderMethod(FoundWidget widget) {
-    final widgetCtr = classCollector.constructorsFor(widget.name).first;
-    _verifyRequiredCtrParams(widgetCtr);
+    final widgetCtr = _widgetCtrFor(widget.name);
+    if (widgetCtr?.skipBuilder == true) {
+      return;
+    }
+    _verifyRequiredCtrParams(widgetCtr!);
     final rw = ReflectionWriter(widgetCtr, codeExt, sb);
     _childHandled = false;
 

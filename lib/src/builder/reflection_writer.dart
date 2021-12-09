@@ -71,8 +71,7 @@ class ReflectionWriter {
   }
 
   ConvertFunction? _getConvertFunction(ParameterElement p) {
-    final annotation = p.metadata.firstWhereOrNull(
-        (an) => an.element?.enclosingElement?.name == "ConvertFunction");
+    final annotation = findAnnotation(p, "ConvertFunction");
     final value = annotation?.computeConstantValue();
     if (value != null) {
       return convertFunctionFrom(value);

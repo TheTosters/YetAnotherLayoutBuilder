@@ -56,6 +56,10 @@ class XmlAnalyzer {
     Set<String> result = {};
     for (var attr in xmlElement.attributes) {
       final name = attr.name.toString();
+      if (name.startsWith("_") && !name.startsWith("__")) {
+        //special attributes type, in form _attrib="", don't collect them!
+        continue;
+      }
       result.add(name);
       if (isUppercase(name[0]) && !name.startsWith("__")) {
         logger.warning("$path: Found '$name' attribute which start from Capital"

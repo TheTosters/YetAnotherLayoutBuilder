@@ -42,3 +42,28 @@ Action _constValueDelegate(dynamic context, dynamic data) {
   ctx.value = cData.builder(cData.parentName, cData.data);
   return Action.proceed;
 }
+
+/// Returns any [Widget] which must be stored in [data] under key *widget* or
+/// by calling provider if there is a key *provider*. Provider must be a type of
+/// [BlockProvider].
+Action _blockDelegate(dynamic context, dynamic data) {
+  LayoutBuildContext lbc = context;
+  final WidgetData wData = data;
+  wData.buildContext = lbc.buildContext;
+  final BlockProvider? prv = wData["provider"];
+  lbc.widget = (prv != null) ? prv(data.data) : wData["widget"];
+  wData.parentChildren!.add(lbc.widget!);
+  return Action.proceed;
+}
+
+Action _yalbStyleDelegate(dynamic context, dynamic data) {
+  KeyValue ctx = context;
+  final ConstData cData = data;
+  if (ctx.value == null || ctx.value.isEmpty) {
+    throw Exception("YalbStyle node must have at least one attribute node!");
+  }
+  //cData.data points to BuildCoordinator.styles map!
+  cData.data[cData.parentName] = ctx.value;
+  ctx.value = null;
+  return Action.proceed;
+}

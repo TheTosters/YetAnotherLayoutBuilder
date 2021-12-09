@@ -11,6 +11,9 @@ part "processors.dart";
 part "value_builders.dart";
 part "nodes.dart";
 
+/// Widget provider signature for YalbBlock node attribute *provider*.
+typedef BlockProvider = material.Widget Function(Map<String, dynamic> data);
+
 typedef DelegateDataProcessor = dynamic Function(Map<String, dynamic> inData);
 typedef WidgetBuilder = material.Widget Function(WidgetData data);
 typedef ConstBuilder = dynamic Function(
@@ -114,14 +117,18 @@ class Registry {
     final item = LayoutBuilderItem(elementName, false, _constValueDelegate,
         builder, _nopProcessor, ParsedItemType.constValue);
     item.parentName = parentName;
-    _items.update(elementName, (existing) => existing.next = item,
-        ifAbsent: () => item);
+    _items.update(elementName, (existing) {
+      item.next = existing;
+      return item;
+    }, ifAbsent: () => item);
   }
 }
 
 class LayoutBuildCoordinator extends BuildCoordinator {
   final Map<String, dynamic> objects;
   final Map<String, TrackedValue> objectUsageMap = {};
+  final Map<String, Map<String, dynamic>> styles = {};
+  int _inConstDepth = 0;
 
   List<WidgetData> containersData = [
     WidgetData(null, _dummyBuilder, {})..children = []
@@ -139,7 +146,10 @@ class LayoutBuildCoordinator extends BuildCoordinator {
 
   @override
   void step(BuildAction action, String nodeName) {
-    if (action == BuildAction.goLevelUp) {
+    if (action == BuildAction.finaliseConstVal) {
+      _inConstDepth--;
+    }
+    if (_inConstDepth == 0 && action == BuildAction.goLevelUp) {
       containersData.removeLast();
     }
   }
@@ -154,8 +164,14 @@ class LayoutBuildCoordinator extends BuildCoordinator {
       return ConstData(
           parentNodeName, name, _findConstDataBuilder(name), rawData);
     }
-    _resolveExternals(rawData, true);
     final item = Registry._items[delegateName]!;
+    if (item.itemType == ParsedItemType.constValue) {
+      //Special nodes
+      _resolveExternals(rawData, false);
+      return ConstData(rawData["name"], "", _constValueNOPBuilder, styles);
+    }
+    _resolveExternals(rawData, true);
+    _applyStyleInfoIfNeeded(delegateName, rawData);
     final siblings = containersData.last.children;
     WidgetData result =
         WidgetData(siblings, item.builder, item.dataProcessor(rawData));
@@ -196,10 +212,16 @@ class LayoutBuildCoordinator extends BuildCoordinator {
 
   @override
   ParsedItemType itemType(String name) {
+    ParsedItemType result;
     if (name.startsWith("_")) {
-      return ParsedItemType.constValue;
+      result = ParsedItemType.constValue;
+    } else {
+      result = Registry._items[name]!.itemType;
     }
-    return Registry._items[name]!.itemType;
+    if (result == ParsedItemType.constValue) {
+      _inConstDepth++;
+    }
+    return result;
   }
 
   LayoutBuilderItem? _findBuilderItem(String parent, String name) {
@@ -221,5 +243,18 @@ class LayoutBuildCoordinator extends BuildCoordinator {
   ConstBuilder _findConstDataBuilder(String name) {
     final item = _findBuilderItem(parentNodeName, name);
     return item?.builder ?? _constValueStringBuilder;
+  }
+
+  void _applyStyleInfoIfNeeded(String name, Map<String, dynamic> rawData) {
+    final styleName = rawData["_yalbStyle"];
+    if (styleName != null) {
+      final styleInfo = styles[styleName];
+      if (styleInfo != null) {
+        rawData.addAll(styleInfo);
+      } else {
+        print("ERROR xml node '$name' requested yalbStyle named '$styleName'"
+            " but this style is not defined");
+      }
+    }
   }
 }

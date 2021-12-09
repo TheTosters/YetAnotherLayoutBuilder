@@ -35,6 +35,18 @@ class ConvertFunction {
       this.functionName, this.nullableResult, this.funcExt, this.mapExt);
 }
 
+class SkipWidgetBuilder {
+  const SkipWidgetBuilder();
+}
+
+class GenerateDataProcessor {
+  const GenerateDataProcessor();
+}
+
+class MatchAnyConstructor {
+  const MatchAnyConstructor();
+}
+
 // expect other to be DartObjectImpl
 ConvertFunction convertFunctionFrom(dynamic other) {
   final fName = other.fields["functionName"].toStringValue();

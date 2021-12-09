@@ -199,7 +199,7 @@ primitive (String, int, double, bool) then it must be used as child node, for ex
 As you can see Color class have several constructors, builder can detect it by matching node
 attributes and prepare one or several builders. All depends what it find in xml.to
 
-### Builder rule: Attribute node
+### Builder rule: Attribute node (const value)
 
 As mentioned earlier if node starts with '_' it's considered as a parameter for parent node (widget).
 Ok we know name of attribute but what about type? There are two things which you need to know:
@@ -375,6 +375,7 @@ then this value is considered as final, and passed to constructor without possib
 any way.
 
 **My data processor is not used? (advanced)**
+
 If you remember section about ```Registry``` there are methods like:
 ```dart
 Registry.addWidgetBuilder("name", _builder, dataProcessor:_dataProcessor);
@@ -384,8 +385,7 @@ which can change it as needed. But this will happen only on parse phase! When yo
 ```updateObjects``` on ```LayoutBuilder``` newly given values will not be passed to
 ```_dataProcessor```. So keep this in mind updating objects!
 
-## Additional information
+## Thanks
 
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.
+I would like to thanks guys who created [xml_layout](https://pub.dev/packages/xml_layout) package
+for inspiring me to create my own variation in this area. It was fun to analyze and extend you work.
