@@ -182,7 +182,6 @@ class CodeGenerator {
         return;
       }
       errorPart = "single child";
-
     } else if (widget.parentship == Parentship.multipleChildren) {
       if (childrenParam != null) {
         rw.writeCtrParam(childrenParam, true, _writeAttribGetter);
@@ -264,7 +263,10 @@ class CodeGenerator {
 
         final tmp =
             progressCollector?.data[ProgressCollector.keyProcessedNodes];
-        final nodes = tmp?[file.toString()];
+        final nodes = (tmp?[file.toString()] as Iterable)
+            .map((e) =>
+                classCollector.hasConstructor(e) ? e : "$e (not resolved)")
+            .toList();
         _writeCommentList("Processed nodes:", 3, nodes);
 
         final tmp2 = progressCollector?.data[ProgressCollector.keyIgnoredNodes];
@@ -302,14 +304,12 @@ class CodeGenerator {
           sb.write(p.type.element?.name);
           sb.writeln(".values);");
           codeExt.needMapStringToEnum();
-
         } else if (p.type.element?.name == "int") {
           //eg.: inData.updateInt("width");
           sb.write('  inData.updateInt("');
           sb.write(p.name);
           sb.writeln('");');
           codeExt.needMapStringToInt();
-
         } else if (p.type.element?.name == "double") {
           //eg.: inData.updateDouble("width");
           sb.write('  inData.updateDouble("');
