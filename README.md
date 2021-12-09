@@ -250,13 +250,139 @@ multiple children it might look like:
   </Column>
 ```
 
-### Builder: Binding external data
-TODO:
-- usage of $
-- usage of @
-- bind of live values
-- bind of callbacks
-- bind of providers
+### Builder: Using external data
+
+While creating widgets there is often need to deliver some runtime information to newly created
+layout. YALB supports this in two ways:
+- When creating builder through call to ```LayoutBuilder(xmlString, {})``` second argument is a
+  ```Map``` with String keys and dynamic. Values from this map can be accessed in XML.
+- Before call to ```build()``` method on ```LayoutBuilder``` it's possible to update objects passed
+  while constructing builder by call to ```updateObjects()```. Note that updated will be only
+  objects which are used by widgets.
+
+How to access objects passed to  ```LayoutBuilder``` from XML? There are two ways to do it, let's
+look into simple code:
+
+```dart
+    final builder = LayoutBuilder(xmlString, {
+      "MyText": "This is my Text",
+      "MyPadding": EdgeInsets.all(22),
+      "ButtonCallback": () {
+        setState((){
+          print("Pressed!");
+        });
+      },
+    });
+    return builder.build(context);
+```
+
+and corresponding xml:
+
+```xml
+  <Container padding="@MyPadding">
+    <TextButton onPressed="@ButtonCallback">
+        <Text data="$MyText"/>
+    </TextButton>
+  </Container>
+```
+
+As you probably noted accessing to objects is done by using proper key (case sensitive!) preceded by
+```$``` or ```@``` sign. What is difference?
+- If you want force ```String``` value to be used, place ```$``` in front. On object taken from map
+will be executed ```toString()``` method and result will be used as a parameter. *NOTE* it is not
+this same ad ```Dart``` string interpolation, no extra magic can be done.
+- If you want to pass object without any change of type, then use ```@```, it pass value as it is
+directly to constructor parameter.
+
+You probably noticed that any kind of data can be passed, so it's straight forward way to:
+- Pass some code build widget or styling and attach it to xml based build.
+- Pass callbacks and functions which can be called by widgets.
+- Pass texts if any of them can be changed in runtime.
+- Pass dynamic information for special nodes (described later).
+- Pass builders for widgets like ```ListView```.
+
+#### PITFALLS
+
+Because YALB separates parse and build phases there are some nasty pitfalls when working with
+external data. Here are most common with explanation:
+
+**Passing class field as an object.**
+This might look like:
+```dart
+class MyState extends State<MyHomePage> {
+  yalb.LayoutBuilder? builder;
+  String _myField = "This is text";
+
+@override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+        future: _loadFileContent("assets/layout.xml"),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            builder ??= yalb.LayoutBuilder(snapshot.data!, {
+              "MyText": _myField,
+              "callback": () {
+                setState((){
+                    _myField = "Second text"
+                });
+              },
+            });
+            return builder!.build(context);
+          }
+          return Container();
+        }));
+  }
+}
+```
+Let's assume in xml you have button which call callback from objects, as a result text in some
+widget should change. But this will not work. Why? Because when ```LayoutBuilder``` perform parsing
+of xml it collects all data referenced by widgets described in xml. Then whole build process is
+structured along with all needed data in needed places. From this moment build structure is "baked"
+and will not change even if you change value of field ```_myField```. Because value taken from it
+is copied and Strings in Dart are immutable. Okay... how to fix this? Here is solution:
+```dart
+    "callback": () {
+        setState((){
+            builder!.updateObjects({"MyText" : "My next text"});
+        });
+    },
+```
+or ...
+```dart
+    "callback": () {
+        setState((){
+            builder!.updateObjects({"MyText" : _myField});
+        });
+    },
+```
+if value of ```_myField``` changed and you don't want to use const text.
+
+**External data + const value => NO GO.**
+
+Lets take code from previous pitfall, but use it with this xml:
+```xml
+    <TextButton onPressed="@ButtonCallback">
+        <Text>
+            <_data="$MyText"/>
+        </Text>
+    </TextButton>
+```
+This creates situation in which change of ```MyText``` by any means is impossible (yet... maybe it
+will change in future ). Why? Since argument for ```Text``` is given as embedded node started
+with ```_``` (often referred as const value) it will be eliminated from build process after
+parsing xml. Such xml will be processed in way which evaluates data argument for constructor and
+then this value is considered as final, and passed to constructor without possibility to change in
+any way.
+
+**My data processor is not used? (advanced)**
+If you remember section about ```Registry``` there are methods like:
+```dart
+Registry.addWidgetBuilder("name", _builder, dataProcessor:_dataProcessor);
+```
+When xml is parsed, all arguments from xml node are collected and passed to ```_dataProcessor```
+which can change it as needed. But this will happen only on parse phase! When you call
+```updateObjects``` on ```LayoutBuilder``` newly given values will not be passed to
+```_dataProcessor```. So keep this in mind updating objects!
 
 ## Additional information
 
