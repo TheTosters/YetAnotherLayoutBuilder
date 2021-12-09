@@ -2,6 +2,7 @@ import 'package:build/build.dart';
 import 'package:glob/glob.dart';
 import 'package:path/path.dart' as path;
 import 'package:logging/logging.dart';
+import 'package:yet_another_layout_builder/src/builder/styles_collector.dart';
 
 import 'found_items.dart';
 import 'path_matcher.dart';
@@ -34,8 +35,9 @@ class WidgetRepositoryBuilder implements Builder {
     final progressCollector =
         options.config["collect_progress"] ? ProgressCollector() : null;
 
-    final xmlAnalyzer =
-        XmlAnalyzer(logger, progressCollector, options.config["ignore_nodes"]);
+    final stylesCollector = StylesCollector(logger);
+    final xmlAnalyzer = XmlAnalyzer(logger, progressCollector,
+        options.config["ignore_nodes"], stylesCollector);
 
     PathMatcher excluder = PathMatcher(options.config["ignore_input"]);
     await for (final input in buildStep.findAssets(_allFilesInAssets)) {
@@ -52,6 +54,7 @@ class WidgetRepositoryBuilder implements Builder {
 
     final widgets = xmlAnalyzer.widgets;
     final classCollector = await _resolveClasses(buildStep, widgets);
+    addStyleRelatedAttributes(widgets, classCollector, stylesCollector);
 
     final output = _outputFile(buildStep);
     final codeGen =

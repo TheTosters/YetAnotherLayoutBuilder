@@ -1,8 +1,10 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:yet_another_layout_builder/src/builder/dart_extensions.dart';
+import 'package:collection/collection.dart';
 
 import 'class_finders.dart';
 import 'found_items.dart';
+import 'styles_collector.dart';
 
 /// Analyzes parameters in given constructor and determine type of Parentship
 /// for widget
@@ -53,5 +55,24 @@ void widgetsCompact(
       }
     }
     index++;
+  }
+}
+
+void addStyleRelatedAttributes(List<FoundWidget> widgets,
+    ClassConstructorsCollector collector, StylesCollector styles) {
+  for(var widget in widgets) {
+    final ctr = collector.constructorsFor(widget.name).firstOrNull;
+    if (ctr != null) {
+      final extraAttribs = styles.styledAttributesFor(widget.name);
+      // add extra attributes to widget, but only those which present at
+      // found constructor
+      for(var ea in extraAttribs) {
+        final eaName = ea;
+        final exists = ctr.constructor!.parameters.any((p) => p.name == eaName);
+        if (exists) {
+          ctr.attributes.add(ea);
+        }
+      }
+    }
   }
 }

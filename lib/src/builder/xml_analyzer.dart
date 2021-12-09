@@ -1,6 +1,8 @@
+import 'package:collection/collection.dart';
 import 'package:logging/logging.dart';
 import 'package:xml/xml.dart';
 import 'package:validators/validators.dart';
+import 'package:yet_another_layout_builder/src/builder/styles_collector.dart';
 
 import 'found_items.dart';
 import 'progress_collector.dart';
@@ -12,8 +14,10 @@ class XmlAnalyzer {
   final List<FoundWidget> widgets = [];
   final Iterable ignoredNodes;
   final ProgressCollector? progressCollector;
+  final StylesCollector stylesCollector;
 
-  XmlAnalyzer(this.logger, this.progressCollector, this.ignoredNodes);
+  XmlAnalyzer(this.logger, this.progressCollector, this.ignoredNodes,
+      this.stylesCollector);
 
   void process(String xmlStr, String path) {
     final xmlDoc = XmlDocument.parse(xmlStr);
@@ -42,6 +46,10 @@ class XmlAnalyzer {
     }
     progressCollector?.addProcessedNode(wName, path);
 
+    if (wName == "YalbStyle") {
+      _processYalbStyleNode(xmlElement, attributes);
+    }
+
     final widget = FoundWidget(wName, attributes, constItems);
     widgets.add(widget);
     //Update info about parentship, only more children can be set never
@@ -58,6 +66,10 @@ class XmlAnalyzer {
       final name = attr.name.toString();
       if (name.startsWith("_") && !name.startsWith("__")) {
         //special attributes type, in form _attrib="", don't collect them!
+        if (name == "_yalbStyle") {
+          final widgetClass = xmlElement.name.toString();
+          stylesCollector.addStyleUsage(attr.value, widgetClass);
+        }
         continue;
       }
       result.add(name);
@@ -94,5 +106,16 @@ class XmlAnalyzer {
       return true;
     }
     return false;
+  }
+
+  void _processYalbStyleNode(XmlElement xmlElement, Set<String> attributes) {
+    final nameAttr = xmlElement.attributes
+        .firstWhereOrNull((a) => a.name.toString() == "name");
+    if (nameAttr == null) {
+      final reason = "YalbStyle must have argument 'name'";
+      logger.severe(reason);
+      throw Exception(reason);
+    }
+    stylesCollector.addStyle(nameAttr.value, attributes);
   }
 }
