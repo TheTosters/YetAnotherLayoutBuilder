@@ -19,7 +19,7 @@ class _StyleExampleState extends State<StyleExample> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text("Style example"),
+          title: const Text("Style example"),
         ),
         body: FutureBuilder<String>(
             future: _loadFileContent("assets/styles.xml"),

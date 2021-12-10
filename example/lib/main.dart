@@ -1,8 +1,9 @@
-import 'package:example/custom_registry.dart';
 import 'package:flutter/material.dart';
 
-import 'style_example.dart';
 import 'widget_repository.g.dart';
+import 'custom_registry.dart';
+import 'style_example.dart';
+import 'external_data_example.dart';
 
 void main() {
   registerWidgetBuilders();
@@ -34,20 +35,24 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _SelectorState extends State<MyHomePage> {
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-        title: Text(widget.title),
-    ),
-    body: Center(
-      child: Column(
-        children: [
-          TextButton(onPressed: () => _goto(StyleExample()), child: const Text("Style example"))
-      ],
-      ),
-    ));
+          title: Text(widget.title),
+        ),
+        body: Center(
+          child: Column(
+            children: [
+              TextButton(
+                  onPressed: () => _goto(StyleExample()),
+                  child: const Text("Style example")),
+              TextButton(
+                  onPressed: () => _goto(ExternalDataExample()),
+                  child: const Text("External Data example"))
+            ],
+          ),
+        ));
   }
 
   void _goto(StatefulWidget dest) {

@@ -28,3 +28,4 @@ flutter:
 
   assets:
     - assets/styles.xml
+    - assets/external_data.xml

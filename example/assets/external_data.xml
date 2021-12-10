@@ -1,0 +1,20 @@
+<Center>
+        <Column>
+            <Text data="$text_1"/>
+            <Text>
+                <_data value="$text_2"/>
+            </Text>
+            <Text data="@text_3"/>
+            <Text data="$number"/>
+
+            <TextButton onPressed="@onButtonPress">
+                <Text data="Press and look at console!"/>
+            </TextButton>
+
+            <TextButton onPressed="@onChangeableButtonPress">
+                <Text data="$changeableCaption"/>
+            </TextButton>
+
+            <YalbBlock widget="@injectedWidget"/>
+        </Column>
+</Center>
