@@ -1,9 +1,7 @@
-import 'package:example/registry.dart';
+import 'package:example/custom_registry.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:yet_another_layout_builder/yet_another_layout_builder.dart'
-    as yalb;
 
+import 'style_example.dart';
 import 'widget_repository.g.dart';
 
 void main() {
@@ -18,7 +16,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'YALB Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -32,49 +30,29 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MyHomePage> createState() => _SelectorState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  yalb.LayoutBuilder? builder;
-
-  Future<String> _loadFileContent(String path) {
-    return rootBundle.loadString(path);
-  }
+class _SelectorState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text(widget.title),
-        ),
-        body: FutureBuilder<String>(
-            future: _loadFileContent("assets/layout.xml"),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                builder ??= yalb.LayoutBuilder(snapshot.data!, {
-                  "MyText": "My Text 1",
-                  "pad": EdgeInsets.all(22),
-                  "cir": CircularProgressIndicator(),
-                  "textP": (d) => Text("Provided"),
-                  "listItemBuilder": _listItemBuilder,
-                  "callback": () {
-                    setState((){
-                      builder!.updateObjects({"MyText" : "Second"});
-                      print("ok");
-                    });
-                  },
-                  "style":  TextButton.styleFrom(
-                    textStyle: const TextStyle(fontSize: 20),
-                  )
-                });
-                return builder!.build(context);
-              }
-              return Container();
-            }));
+        title: Text(widget.title),
+    ),
+    body: Center(
+      child: Column(
+        children: [
+          TextButton(onPressed: () => _goto(StyleExample()), child: const Text("Style example"))
+      ],
+      ),
+    ));
   }
 
-  Widget _listItemBuilder(BuildContext context, int index) {
-    return Container(child: Text("Item $index"), height: 30, width: 100, color: Color(0xFF));
+  void _goto(StatefulWidget dest) {
+    setState(() {
+      Navigator.of(context).push(MaterialPageRoute(builder: (context) => dest));
+    });
   }
 }
