@@ -34,8 +34,9 @@ class CodeGenerator {
       final constructor = constructable?.constructor;
       if (constructor != null) {
         _generateBuilderMethod(widget);
-        widget.useCustomDataProcessor = constructable!.requireDataProcessor ||
-            _needCustomDataProcessor(widget, constructor);
+        widget.useCustomDataProcessor =
+            (constructable!.specialDataProcessor != null) ||
+                _needCustomDataProcessor(widget, constructor);
 
         _generateDataProcessorMethod(widget, constructor);
       }
@@ -95,18 +96,27 @@ class CodeGenerator {
 
   void _writeWidgetBuilderRegisterCall(FoundWidget widget) {
     final widgetCtr = _widgetCtrFor(widget.name);
-    if (widgetCtr?.constructor != null && widgetCtr?.skipBuilder == false) {
-      sb.write("  Registry.");
-      sb.write(_determineAddMethod(widget));
-      sb.write('("');
-      sb.write(widget.name);
-      sb.write('", ');
-      _writeWidgetBuilderName(widget);
-      if (widget.useCustomDataProcessor) {
-        sb.write(", dataProcessor:");
+    if (widgetCtr?.constructor != null) {
+      if (widgetCtr?.skipBuilder == false) {
+        sb.write("  Registry.");
+        sb.write(_determineAddMethod(widget));
+        sb.write('("');
+        sb.write(widget.name);
+        sb.write('", ');
+        _writeWidgetBuilderName(widget);
+        if (widget.useCustomDataProcessor) {
+          sb.write(", dataProcessor:");
+          _writeProcessorName(widget);
+        }
+        sb.writeln(");");
+      } else if (widgetCtr?.specialDataProcessor != null) {
+        assert(widget.useCustomDataProcessor);
+        sb.write("  Registry.");
+        sb.write(widgetCtr?.specialDataProcessor);
+        sb.write('(');
         _writeProcessorName(widget);
+        sb.writeln(");");
       }
-      sb.writeln(");");
     }
   }
 

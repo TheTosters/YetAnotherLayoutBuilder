@@ -32,7 +32,10 @@ class XmlAnalyzer {
     for (var subEl in xmlElement.childElements) {
       if (!_handledAsChildAttrib(constItems, subEl, attributes, path)) {
         _processElement(subEl, path);
-        childCount++;
+        //Some nodes should not count as children
+        if (subEl.name.toString() != "YalbStyle") {
+          childCount++;
+        }
       }
     }
     final wName = xmlElement.name.toString();

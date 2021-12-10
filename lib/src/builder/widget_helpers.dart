@@ -22,11 +22,15 @@ Parentship parentshipFromConstructor(ConstructorElement constructor) {
 /// Assign new parentship to widget but only if ```p``` indicates more
 /// children then is already assigned.
 void combineParentship(FoundWidget widget, Parentship p) {
-  if (widget.parentship == Parentship.noChildren) {
+  if (widget.parentship == Parentship.noChildren && p != Parentship.noChildren) {
     widget.parentship = p;
+    widget.attributes.add( p == Parentship.oneChild ? "child" : "children");
+
   } else if (widget.parentship == Parentship.oneChild &&
-      p != Parentship.noChildren) {
+      p == Parentship.multipleChildren) {
     widget.parentship = p;
+    widget.attributes.remove("child");
+    widget.attributes.add("children");
   }
 }
 

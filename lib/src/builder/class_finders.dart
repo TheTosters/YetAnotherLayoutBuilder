@@ -2,12 +2,13 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:collection/collection.dart';
 import 'package:logging/logging.dart';
+import 'package:yet_another_layout_builder/src/builder/annotations.dart';
 
 class Constructable {
   final Set<String> attributes;
   ConstructorElement? constructor;
   bool skipBuilder = false;
-  bool requireDataProcessor = false;
+  String? specialDataProcessor;
 
   Constructable() : attributes = {};
   Constructable.from(Constructable other)
@@ -57,13 +58,12 @@ class ClassConstructorsCollector {
         value.add(Constructable()
           ..constructor = ctr
           ..skipBuilder = hasAnnotation(clazz, "SkipWidgetBuilder")
-          ..requireDataProcessor = hasAnnotation(clazz, "GenerateDataProcessor")
+          ..specialDataProcessor = getSpecialDataProcessor(clazz)
           ..attributes.addAll(attributes));
       } else {
         found.attributes.addAll(attributes);
         found.skipBuilder |= hasAnnotation(clazz, "SkipWidgetBuilder");
-        found.requireDataProcessor |=
-            hasAnnotation(clazz, "GenerateDataProcessor");
+        found.specialDataProcessor ??= getSpecialDataProcessor(clazz);
       }
       return value;
     },
@@ -71,8 +71,7 @@ class ClassConstructorsCollector {
               Constructable()
                 ..constructor = ctr
                 ..skipBuilder = hasAnnotation(clazz, "SkipWidgetBuilder")
-                ..requireDataProcessor =
-                    hasAnnotation(clazz, "GenerateDataProcessor")
+                ..specialDataProcessor = getSpecialDataProcessor(clazz)
                 ..attributes.addAll(attributes)
             ]);
   }

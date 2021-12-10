@@ -1,3 +1,7 @@
+import 'package:analyzer/dart/element/element.dart';
+
+import 'class_finders.dart';
+
 /// Annotation for constructor/function parameters
 ///
 /// Used at parameter level to inform builder that value to this parameter
@@ -39,12 +43,22 @@ class SkipWidgetBuilder {
   const SkipWidgetBuilder();
 }
 
-class GenerateDataProcessor {
-  const GenerateDataProcessor();
+class SpecialDataProcessor {
+  final String registryMethod;
+  const SpecialDataProcessor(this.registryMethod);
 }
 
 class MatchAnyConstructor {
   const MatchAnyConstructor();
+}
+
+String? getSpecialDataProcessor(ClassElement clazz) {
+  final annotation = findAnnotation(clazz, "SpecialDataProcessor");
+  final dynamic value = annotation?.computeConstantValue();
+  if (value != null) {
+    return value.fields["registryMethod"].toStringValue();
+  }
+  return null;
 }
 
 // expect other to be DartObjectImpl

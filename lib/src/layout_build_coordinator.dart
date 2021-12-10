@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:flutter/material.dart' as material;
 import 'package:processing_tree/processing_tree.dart';
 import 'package:processing_tree/tree_builder.dart';
+import 'package:collection/collection.dart';
 
 import '../yet_another_layout_builder.dart';
 
@@ -122,6 +123,13 @@ class Registry {
       return item;
     }, ifAbsent: () => item);
   }
+
+  static void setStyleDataProcessor(DelegateDataProcessor prc) {
+    _items.update(
+        "YalbStyle",
+        (oldItem) => LayoutBuilderItem(oldItem.elementName, oldItem.isContainer,
+            oldItem.delegate, oldItem.builder, prc, oldItem.itemType));
+  }
 }
 
 class LayoutBuildCoordinator extends BuildCoordinator {
@@ -168,7 +176,11 @@ class LayoutBuildCoordinator extends BuildCoordinator {
     if (item.itemType == ParsedItemType.constValue) {
       //Special nodes
       _resolveExternals(rawData, false);
-      return ConstData(rawData["name"], "", _constValueNOPBuilder, styles);
+      if (delegateName == "YalbStyle") {
+        final converter = _InFlyConverter(item.dataProcessor, styles);
+        return ConstData(rawData["name"], "", _constValueNOPBuilder, converter);
+      }
+      throw Exception("Internal error");
     }
     _resolveExternals(rawData, true);
     _applyStyleInfoIfNeeded(delegateName, rawData);
@@ -256,5 +268,16 @@ class LayoutBuildCoordinator extends BuildCoordinator {
             " but this style is not defined");
       }
     }
+  }
+}
+
+class _InFlyConverter extends DelegatingMap<String, Map<String, dynamic>>{
+  final Map<String, Map<String, dynamic>> _map;
+  final DelegateDataProcessor dataProcessor;
+  _InFlyConverter(this.dataProcessor, this._map) : super(_map);
+
+  @override
+  void operator []=(String key, Map<String, dynamic> value) {
+    _map[key] = dataProcessor(value);
   }
 }
