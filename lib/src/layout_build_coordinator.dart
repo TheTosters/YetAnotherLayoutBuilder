@@ -136,7 +136,8 @@ class LayoutBuildCoordinator extends BuildCoordinator {
   final Map<String, dynamic> objects;
   final Map<String, TrackedValue> objectUsageMap = {};
   final Map<String, Map<String, dynamic>> styles = {};
-  int _inConstDepth = 0;
+  final List<List<material.Widget>> childrenLists = [];
+  final trueContainerMarker = Object();
 
   List<WidgetData> containersData = [
     WidgetData(null, _dummyBuilder, {})..children = []
@@ -145,53 +146,61 @@ class LayoutBuildCoordinator extends BuildCoordinator {
   LayoutBuildCoordinator(this.objects);
 
   @override
-  PNDelegate? delegate(String name) {
-    if (name.startsWith("_")) {
-      return _findConstDataDelegate(name.substring(1));
-    }
-    return Registry._items[name]!.delegate;
-  }
-
-  @override
-  void step(BuildAction action, String nodeName) {
-    if (action == BuildAction.finaliseConstVal) {
-      _inConstDepth--;
-    }
-    if (_inConstDepth == 0 && action == BuildAction.goLevelUp) {
+  void step(BuildAction action, ParsedItem item) {
+    if (item.type == ParsedItemType.owner &&
+        action == BuildAction.goLevelUp &&
+        item.extObj == trueContainerMarker) {
       containersData.removeLast();
     }
   }
 
   @override
-  dynamic delegateData(String delegateName, Map<String, dynamic> rawData) {
-    if (delegateName.startsWith("_")) {
-      _resolveExternals(rawData, false);
-      final name = delegateName.substring(1);
+  ParsedItem requestData(BuildPhaseState state) {
+    PNDelegate delegate;
+    ParsedItemType itemType;
+    dynamic outData;
+    dynamic extObj;
+    if (state.delegateName.startsWith("_")) {
+      final name = state.delegateName.substring(1);
+      delegate = _findConstDataDelegate(state.parentNodeName, name);
+      itemType = ParsedItemType.constValue;
+
+      _resolveExternals(state.data, false);
       //Note: don't call item.dataProcessor for this type of node
       //decision is that builder handle processing + building in one go!
-      return ConstData(
-          parentNodeName, name, _findConstDataBuilder(name), rawData);
-    }
-    final item = Registry._items[delegateName]!;
-    if (item.itemType == ParsedItemType.constValue) {
-      //Special nodes
-      _resolveExternals(rawData, false);
-      if (delegateName == "YalbStyle") {
-        final converter = _InFlyConverter(item.dataProcessor, styles);
-        return ConstData(rawData["name"], "", _constValueNOPBuilder, converter);
+      outData = ConstData(state.parentNodeName, name,
+          _findConstDataBuilder(state.parentNodeName, name), state.data);
+    } else {
+      final item = Registry._items[state.delegateName]!;
+      delegate = item.delegate;
+      itemType = item.itemType;
+
+      if (item.itemType == ParsedItemType.constValue) {
+        //Special nodes
+        _resolveExternals(state.data, false);
+        if (state.delegateName == "YalbStyle") {
+          final converter = _InFlyConverter(item.dataProcessor, styles);
+          outData = ConstData(
+              state.data["name"], "", _constValueNOPBuilder, converter);
+          return ParsedItem.from(state, delegate, outData, itemType);
+        }
+        throw Exception("Internal error");
       }
-      throw Exception("Internal error");
+
+      _resolveExternals(state.data, true);
+      _applyStyleInfoIfNeeded(state.delegateName, state.data);
+      final siblings = containersData.last.children;
+      outData =
+          WidgetData(siblings, item.builder, item.dataProcessor(state.data));
+      if (item.isContainer) {
+        outData.children = <material.Widget>[];
+        childrenLists.add(outData.children!);
+        containersData.add(outData);
+        extObj = trueContainerMarker;
+      }
     }
-    _resolveExternals(rawData, true);
-    _applyStyleInfoIfNeeded(delegateName, rawData);
-    final siblings = containersData.last.children;
-    WidgetData result =
-        WidgetData(siblings, item.builder, item.dataProcessor(rawData));
-    if (item.isContainer) {
-      result.children = [];
-      containersData.add(result);
-    }
-    return result;
+
+    return ParsedItem.from(state, delegate, outData, itemType, extObj:extObj);
   }
 
   void _resolveExternals(Map<String, dynamic> rawData, bool track) {
@@ -222,20 +231,6 @@ class LayoutBuildCoordinator extends BuildCoordinator {
     return objects[objName];
   }
 
-  @override
-  ParsedItemType itemType(String name) {
-    ParsedItemType result;
-    if (name.startsWith("_")) {
-      result = ParsedItemType.constValue;
-    } else {
-      result = Registry._items[name]!.itemType;
-    }
-    if (result == ParsedItemType.constValue) {
-      _inConstDepth++;
-    }
-    return result;
-  }
-
   LayoutBuilderItem? _findBuilderItem(String parent, String name) {
     var item = Registry._items[name];
     while (item != null) {
@@ -247,12 +242,12 @@ class LayoutBuildCoordinator extends BuildCoordinator {
     return null;
   }
 
-  PNDelegate _findConstDataDelegate(String name) {
+  PNDelegate _findConstDataDelegate(String parentNodeName, String name) {
     final item = _findBuilderItem(parentNodeName, name);
     return item?.delegate ?? _constValueDelegate;
   }
 
-  ConstBuilder _findConstDataBuilder(String name) {
+  ConstBuilder _findConstDataBuilder(String parentNodeName, String name) {
     final item = _findBuilderItem(parentNodeName, name);
     return item?.builder ?? _constValueStringBuilder;
   }
@@ -271,7 +266,7 @@ class LayoutBuildCoordinator extends BuildCoordinator {
   }
 }
 
-class _InFlyConverter extends DelegatingMap<String, Map<String, dynamic>>{
+class _InFlyConverter extends DelegatingMap<String, Map<String, dynamic>> {
   final Map<String, Map<String, dynamic>> _map;
   final DelegateDataProcessor dataProcessor;
   _InFlyConverter(this.dataProcessor, this._map) : super(_map);

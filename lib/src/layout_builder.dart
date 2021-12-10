@@ -13,12 +13,14 @@ class LayoutBuildContext {
 class LayoutBuilder {
   late TreeProcessor _processor;
   late Map<String, TrackedValue> objectUsageMap;
+  late List<List<Widget>> childrenLists;
 
   LayoutBuilder(String xmlStr, Map<String, dynamic> objects) {
     LayoutBuildCoordinator coordinator = LayoutBuildCoordinator(objects);
     XmlTreeBuilder builder = XmlTreeBuilder.coordinated(coordinator);
     _processor = builder.build(xmlStr).inverted();
     objectUsageMap = coordinator.objectUsageMap;
+    childrenLists = coordinator.childrenLists;
     _warnAboutUnusedObjects(objects);
   }
 
@@ -37,6 +39,9 @@ class LayoutBuilder {
   }
 
   Widget build(BuildContext buildContext) {
+    for (var element in childrenLists) {
+      element.clear();
+    }
     LayoutBuildContext context = LayoutBuildContext(buildContext);
     _processor.process(context);
     return context.widget!;
