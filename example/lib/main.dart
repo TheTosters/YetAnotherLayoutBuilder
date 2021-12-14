@@ -4,6 +4,7 @@ import 'widget_repository.g.dart';
 import 'custom_registry.dart';
 import 'style_example.dart';
 import 'external_data_example.dart';
+import 'blocks_example.dart';
 
 void main() {
   registerWidgetBuilders();
@@ -49,7 +50,10 @@ class _SelectorState extends State<MyHomePage> {
                   child: const Text("Style example")),
               TextButton(
                   onPressed: () => _goto(ExternalDataExample()),
-                  child: const Text("External Data example"))
+                  child: const Text("External Data example")),
+              TextButton(
+                  onPressed: () => _goto(BlocksExample()),
+                  child: const Text("Blocks example"))
             ],
           ),
         ));

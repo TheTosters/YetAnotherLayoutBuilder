@@ -7,10 +7,10 @@ import 'package:collection/collection.dart';
 
 import '../yet_another_layout_builder.dart';
 
-part "delegates.dart";
-part "processors.dart";
-part "value_builders.dart";
-part "nodes.dart";
+part 'delegates.dart';
+part 'processors.dart';
+part 'value_builders.dart';
+part 'nodes.dart';
 
 /// Widget provider signature for YalbBlock node attribute *provider*.
 typedef BlockProvider = material.Widget Function(Map<String, dynamic> data);

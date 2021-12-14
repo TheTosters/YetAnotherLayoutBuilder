@@ -33,7 +33,8 @@ class XmlAnalyzer {
       if (!_handledAsChildAttrib(constItems, subEl, attributes, path)) {
         _processElement(subEl, path);
         //Some nodes should not count as children
-        if (subEl.name.toString() != "YalbStyle") {
+        final ignoreAsChildren = const {"YalbStyle", "YalbBlockDef"};
+        if (!ignoreAsChildren.contains(subEl.name.toString())) {
           childCount++;
         }
       }

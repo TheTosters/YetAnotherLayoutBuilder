@@ -13,7 +13,10 @@ const Map<CodeSnippets, String> _codeSnippetsPool = {
   CodeSnippets.mapStringToInt: r'''
   void updateInt(String key) {
     if (containsKey(key)) {
-      this[key] = _improvedIntParse(this[key]!);
+      final val = this[key]!;
+      if (val is! int) {
+        this[key] = _improvedIntParse(val);
+      }
     }
   }
 
@@ -26,7 +29,10 @@ const Map<CodeSnippets, String> _codeSnippetsPool = {
   CodeSnippets.mapStringToDouble: r'''
   void updateDouble(String key) {
     if (containsKey(key)) {
-      this[key] = double.tryParse(this[key]!);
+      final val = this[key]!;
+      if (val is! double) {
+        this[key] = double.tryParse(this[key]!);
+      }
     }
   }
 
