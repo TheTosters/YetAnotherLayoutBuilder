@@ -1,4 +1,16 @@
 <YalbTree>
+    <YalbStyle name="Blue">
+        <_color a="255" b="244" g="100" r="100" />
+        <_padding __EdgeInsets="" value="15" />
+        <_height value="130" />
+    </YalbStyle>
+
+    <YalbBlockDef name="BlueBlock">
+        <Container _yalbStyle="Blue">
+            <Text data="This is Blue Styled Block" />
+        </Container>
+    </YalbBlockDef>
+
     <YalbBlockDef name="PinkBlock">
         <Container>
             <_color value="F0F" />
@@ -7,6 +19,7 @@
             <Text data="This is Pink Block" />
         </Container>
     </YalbBlockDef>
+
     <YalbBlockDef name="YellowBlock">
         <Container _yalbBlockDef="YellowBlock">
             <_color value="FF0" />
@@ -15,9 +28,10 @@
             <Text data="This is Yellow Block" />
         </Container>
     </YalbBlockDef>
+
     <Center>
         <Column>
-            <YalbBlock name="PinkBlock" />
+            <YalbBlock name="BlueBlock" />
             <YalbBlock name="YellowBlock" />
             <YalbBlock name="PinkBlock" />
         </Column>
