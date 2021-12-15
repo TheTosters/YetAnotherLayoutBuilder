@@ -1,11 +1,10 @@
-import 'dart:collection';
-
 import 'package:flutter/material.dart' as material;
 import 'package:processing_tree/processing_tree.dart';
 import 'package:processing_tree/tree_builder.dart';
 import 'package:collection/collection.dart';
 
 import '../yet_another_layout_builder.dart';
+import 'injector.dart';
 
 part 'delegates.dart';
 
@@ -46,36 +45,6 @@ class WidgetData {
   operator [](String key) => data[key];
 
   operator []=(String key, dynamic value) => data[key] = value;
-}
-
-class TrackedValueIterator implements Iterator<TrackedValue> {
-  TrackedValue _cur;
-
-  TrackedValueIterator(TrackedValue first)
-      : _cur = TrackedValue("", const {}, first);
-
-  @override
-  TrackedValue get current => _cur;
-
-  @override
-  bool moveNext() {
-    if (_cur.next != null) {
-      _cur = _cur.next!;
-      return true;
-    }
-    return false;
-  }
-}
-
-class TrackedValue with IterableMixin<TrackedValue> {
-  final Map<String, dynamic> destMap;
-  final String keyName;
-  final TrackedValue? next;
-
-  TrackedValue(this.keyName, this.destMap, this.next);
-
-  @override
-  Iterator<TrackedValue> get iterator => TrackedValueIterator(this);
 }
 
 class LayoutBuilderItem {
@@ -138,16 +107,14 @@ class Registry {
 }
 
 class LayoutBuildCoordinator extends BuildCoordinator {
-  final Map<String, dynamic> objects;
-  final Map<String, TrackedValue> objectUsageMap = {};
+  final Injector injector;
   final Map<String, Map<String, dynamic>> styles = {};
   final List<List<material.Widget>> childrenLists = [];
   final trueContainerMarker = Object();
   final BlockProvider blockProvider;
-
   List<WidgetData> containersData = [];
 
-  LayoutBuildCoordinator(this.objects, this.blockProvider) {
+  LayoutBuildCoordinator(this.injector, this.blockProvider) {
     containersData
         .add(WidgetData(null, blockProvider, _dummyBuilder, {})..children = []);
   }
@@ -182,7 +149,7 @@ class LayoutBuildCoordinator extends BuildCoordinator {
       delegate = item?.delegate ?? _constValueDelegate;
       itemType = ParsedItemType.constValue;
 
-      _resolveExternals(state.data, false);
+      injector.inject(state.data, false);
       //Note: don't call item.dataProcessor for this type of node
       //decision is that builder handle processing + building in one go!
       outData = ConstData(state.parentNodeName, name, builder, state.data);
@@ -193,7 +160,7 @@ class LayoutBuildCoordinator extends BuildCoordinator {
 
       if (item.itemType == ParsedItemType.constValue) {
         //Special nodes
-        _resolveExternals(state.data, false);
+        injector.inject(state.data, false);
         if (state.delegateName == "YalbStyle") {
           final converter = _InFlyConverter(item.dataProcessor, styles);
           outData = ConstData(
@@ -203,7 +170,7 @@ class LayoutBuildCoordinator extends BuildCoordinator {
         throw Exception("Internal error");
       }
 
-      _resolveExternals(state.data, true);
+      injector.inject(state.data, true);
       _applyStyleInfoIfNeeded(state.delegateName, state.data);
       final siblings = containersData.last.children;
       outData = WidgetData(siblings, blockProvider, item.builder,
@@ -217,34 +184,6 @@ class LayoutBuildCoordinator extends BuildCoordinator {
     }
 
     return ParsedItem.from(state, delegate, outData, itemType, extObj: extObj);
-  }
-
-  void _resolveExternals(Map<String, dynamic> rawData, bool track) {
-    //Expect that values in rawData is always String at this moment
-    rawData.updateAll((key, value) {
-      if (value.startsWith("\$")) {
-        //resolve as string
-        return _processResolvable(value.substring(1), key, rawData, track)
-            .toString();
-      } else if (value.startsWith("@")) {
-        //resolve as object itself
-        return _processResolvable(value.substring(1), key, rawData, track);
-      }
-      return value;
-    });
-  }
-
-  dynamic _processResolvable(String objName, String inMapKey,
-      Map<String, dynamic> destMap, bool trackResolved) {
-    if (trackResolved) {
-      objectUsageMap.update(
-          objName, (value) => TrackedValue(inMapKey, destMap, value),
-          ifAbsent: () => TrackedValue(inMapKey, destMap, null));
-    }
-    if (!objects.containsKey(objName)) {
-      print("WARN xml refers to key $objName, but it's not given in objects");
-    }
-    return objects[objName];
   }
 
   LayoutBuilderItem? _findBuilderItem(String parent, String name) {

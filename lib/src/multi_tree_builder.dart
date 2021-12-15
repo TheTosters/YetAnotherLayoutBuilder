@@ -4,6 +4,7 @@ import 'package:processing_tree/tree_builder.dart';
 import 'package:xml/xml.dart';
 
 import '../yet_another_layout_builder.dart';
+import 'injector.dart';
 
 typedef ExtObjectMap = Map<String, dynamic>;
 typedef TreeSurMap = Map<String, TreeSurrounding>;
@@ -11,10 +12,10 @@ typedef BranchBuilder = void Function(XmlElement root, ExtObjectMap ext);
 
 class TreeSurrounding {
   final TreeProcessor treeProcessor;
-  final Map<String, TrackedValue> objectUsageMap;
+  final Injector injector;
   final List<List<Widget>> childrenLists;
 
-  TreeSurrounding(this.treeProcessor, this.objectUsageMap, this.childrenLists);
+  TreeSurrounding(this.treeProcessor, this.injector, this.childrenLists);
 
   Widget build(BuildContext buildContext) {
     for (var element in childrenLists) {
@@ -25,28 +26,20 @@ class TreeSurrounding {
     return context.widget!;
   }
 
-  void updateObjects(ExtObjectMap objects) {
-    for(var entry in objects.entries) {
-      final destQueue = objectUsageMap[entry.key];
-      if (destQueue == null) {
-        print("WARN updateObjects: Object with key ${entry.key} is given but"
-            " it's not used in build widget process.");
-        continue;
-      }
-      for(var d in destQueue) {
-        d.destMap[d.keyName] = entry.value;
-      }
-    }
-  }
+  void updateObjects(ExtObjectMap objects) => injector.reInject(objects);
 }
 
 class MultiTreeBuilder {
   final TreeSurMap blocks;
+  final Map<String, Map<String, dynamic>> styles = {};
 
   MultiTreeBuilder(this.blocks);
 
   TreeSurrounding parse(String xmlStr, ExtObjectMap ext) {
-    Map<String, BranchBuilder> builders = {"YalbBlockDef": _blockBuilder};
+    Map<String, BranchBuilder> builders = {
+      "YalbBlockDef": _blockBuilder,
+      "YalbStyle": _styleBuilder
+    };
 
     final xmlDoc = XmlDocument.parse(xmlStr);
     TreeSurrounding? layoutTree;
@@ -74,7 +67,8 @@ class MultiTreeBuilder {
   }
 
   TreeSurrounding _parseWidgetBranch(XmlElement root, ExtObjectMap ext) {
-    LayoutBuildCoordinator coordinator = LayoutBuildCoordinator(ext,
+    final injector = Injector(ext);
+    LayoutBuildCoordinator coordinator = LayoutBuildCoordinator(injector,
             (buildContext, name, data) {
       final blockBuilder = blocks[name]!;
       blockBuilder.updateObjects(data);
@@ -83,7 +77,7 @@ class MultiTreeBuilder {
     XmlTreeBuilder builder = XmlTreeBuilder.coordinated(coordinator);
     final processor = builder.buildFrom(root).inverted();
     return TreeSurrounding(
-        processor, coordinator.objectUsageMap, coordinator.childrenLists);
+        processor, injector, coordinator.childrenLists);
   }
 
   void _blockBuilder(XmlElement root, ExtObjectMap ext) {
@@ -91,8 +85,18 @@ class MultiTreeBuilder {
     final name = root.getAttribute("name");
     if (name == null || name.isEmpty) {
       throw TreeBuilderException(
-          "Block def need to have name attribute: ${root.toXmlString()}");
+          "Block def need to have 'name' attribute: ${root.toXmlString()}");
     }
     blocks[name] = result;
+  }
+
+  void _styleBuilder(XmlElement root, ExtObjectMap ext) {
+    final result = null;
+    final name = root.getAttribute("name");
+    if (name == null || name.isEmpty) {
+      throw TreeBuilderException(
+          "Style need to have 'name' attribute: ${root.toXmlString()}");
+    }
+    styles[name] = result;
   }
 }

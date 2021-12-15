@@ -30,7 +30,7 @@ class LayoutBuilder {
   void _warnAboutUnusedObjects(Map<String, dynamic> objects) {
     var diff = objects.keys
         .toSet()
-        .difference(rootWidgetBuilder.objectUsageMap.keys.toSet());
+        .difference(rootWidgetBuilder.injector.namesOfUsedInjectables.toSet());
     for (var key in diff) {
       print(
           "WARN Object with key '$key' is given, but it's not used in widgets");
