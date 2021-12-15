@@ -46,7 +46,7 @@ class MultiTreeBuilder {
   MultiTreeBuilder(this.blocks);
 
   TreeSurrounding parse(String xmlStr, ExtObjectMap ext) {
-    Map<String, BranchBuilder> builders = {"YalbBlock": _blockBuilder};
+    Map<String, BranchBuilder> builders = {"YalbBlockDef": _blockBuilder};
 
     final xmlDoc = XmlDocument.parse(xmlStr);
     TreeSurrounding? layoutTree;
@@ -73,8 +73,13 @@ class MultiTreeBuilder {
     return layoutTree;
   }
 
-  static TreeSurrounding _parseWidgetBranch(XmlElement root, ExtObjectMap ext) {
-    LayoutBuildCoordinator coordinator = LayoutBuildCoordinator(ext);
+  TreeSurrounding _parseWidgetBranch(XmlElement root, ExtObjectMap ext) {
+    LayoutBuildCoordinator coordinator = LayoutBuildCoordinator(ext,
+            (buildContext, name, data) {
+      final blockBuilder = blocks[name]!;
+      blockBuilder.updateObjects(data);
+      return blockBuilder.build(buildContext);
+    });
     XmlTreeBuilder builder = XmlTreeBuilder.coordinated(coordinator);
     final processor = builder.buildFrom(root).inverted();
     return TreeSurrounding(
@@ -82,11 +87,11 @@ class MultiTreeBuilder {
   }
 
   void _blockBuilder(XmlElement root, ExtObjectMap ext) {
-    final result = _parseWidgetBranch(root, ext);
+    final result = _parseWidgetBranch(root.childElements.first, ext);
     final name = root.getAttribute("name");
     if (name == null || name.isEmpty) {
       throw TreeBuilderException(
-          "Block need to have name attribute: ${root.toXmlString()}");
+          "Block def need to have name attribute: ${root.toXmlString()}");
     }
     blocks[name] = result;
   }

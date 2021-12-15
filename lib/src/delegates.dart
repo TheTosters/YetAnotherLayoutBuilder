@@ -50,8 +50,10 @@ Action _blockDelegate(dynamic context, dynamic data) {
   LayoutBuildContext lbc = context;
   final WidgetData wData = data;
   wData.buildContext = lbc.buildContext;
-  final BlockProvider? prv = wData["provider"];
-  lbc.widget = (prv != null) ? prv(data.data) : wData["widget"];
+  final String? blockName = wData["name"];
+  lbc.widget = (blockName != null)
+      ? wData.blockProvider(lbc.buildContext, blockName, wData.data)
+      : wData["widget"];
   wData.parentChildren!.add(lbc.widget!);
   return Action.proceed;
 }

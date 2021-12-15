@@ -8,12 +8,16 @@ import 'package:collection/collection.dart';
 import '../yet_another_layout_builder.dart';
 
 part 'delegates.dart';
+
 part 'processors.dart';
+
 part 'value_builders.dart';
+
 part 'nodes.dart';
 
 /// Widget provider signature for YalbBlock node attribute *provider*.
-typedef BlockProvider = material.Widget Function(Map<String, dynamic> data);
+typedef BlockProvider = material.Widget Function(
+    material.BuildContext context, String blockName, Map<String, dynamic> data);
 
 typedef DelegateDataProcessor = dynamic Function(Map<String, dynamic> inData);
 typedef WidgetBuilder = material.Widget Function(WidgetData data);
@@ -34,9 +38,10 @@ class WidgetData {
   List<material.Widget>? children;
   late material.BuildContext buildContext;
   final WidgetBuilder builder;
+  final BlockProvider blockProvider;
   final List<material.Widget>? parentChildren; //our siblings
 
-  WidgetData(this.parentChildren, this.builder, this.data);
+  WidgetData(this.parentChildren, this.blockProvider, this.builder, this.data);
 
   operator [](String key) => data[key];
 
@@ -138,12 +143,14 @@ class LayoutBuildCoordinator extends BuildCoordinator {
   final Map<String, Map<String, dynamic>> styles = {};
   final List<List<material.Widget>> childrenLists = [];
   final trueContainerMarker = Object();
+  final BlockProvider blockProvider;
 
-  List<WidgetData> containersData = [
-    WidgetData(null, _dummyBuilder, {})..children = []
-  ];
+  List<WidgetData> containersData = [];
 
-  LayoutBuildCoordinator(this.objects);
+  LayoutBuildCoordinator(this.objects, this.blockProvider) {
+    containersData
+        .add(WidgetData(null, blockProvider, _dummyBuilder, {})..children = []);
+  }
 
   @override
   void step(BuildAction action, ParsedItem item) {
@@ -162,14 +169,15 @@ class LayoutBuildCoordinator extends BuildCoordinator {
     dynamic extObj;
     if (state.delegateName.startsWith("_")) {
       final name = state.delegateName.substring(1);
-      delegate = _findConstDataDelegate(state.parentNodeName, name);
+      final item = _findBuilderItem(state.parentNodeName, name);
+      final builder = item?.builder ?? _constValueStringBuilder;
+      delegate = item?.delegate ?? _constValueDelegate;
       itemType = ParsedItemType.constValue;
 
       _resolveExternals(state.data, false);
       //Note: don't call item.dataProcessor for this type of node
       //decision is that builder handle processing + building in one go!
-      outData = ConstData(state.parentNodeName, name,
-          _findConstDataBuilder(state.parentNodeName, name), state.data);
+      outData = ConstData(state.parentNodeName, name, builder, state.data);
     } else {
       final item = Registry._items[state.delegateName]!;
       delegate = item.delegate;
@@ -190,8 +198,8 @@ class LayoutBuildCoordinator extends BuildCoordinator {
       _resolveExternals(state.data, true);
       _applyStyleInfoIfNeeded(state.delegateName, state.data);
       final siblings = containersData.last.children;
-      outData =
-          WidgetData(siblings, item.builder, item.dataProcessor(state.data));
+      outData = WidgetData(siblings, blockProvider, item.builder,
+          item.dataProcessor(state.data));
       if (item.isContainer) {
         outData.children = <material.Widget>[];
         childrenLists.add(outData.children!);
@@ -200,7 +208,7 @@ class LayoutBuildCoordinator extends BuildCoordinator {
       }
     }
 
-    return ParsedItem.from(state, delegate, outData, itemType, extObj:extObj);
+    return ParsedItem.from(state, delegate, outData, itemType, extObj: extObj);
   }
 
   void _resolveExternals(Map<String, dynamic> rawData, bool track) {
@@ -242,16 +250,6 @@ class LayoutBuildCoordinator extends BuildCoordinator {
     return null;
   }
 
-  PNDelegate _findConstDataDelegate(String parentNodeName, String name) {
-    final item = _findBuilderItem(parentNodeName, name);
-    return item?.delegate ?? _constValueDelegate;
-  }
-
-  ConstBuilder _findConstDataBuilder(String parentNodeName, String name) {
-    final item = _findBuilderItem(parentNodeName, name);
-    return item?.builder ?? _constValueStringBuilder;
-  }
-
   void _applyStyleInfoIfNeeded(String name, Map<String, dynamic> rawData) {
     final styleName = rawData["_yalbStyle"];
     if (styleName != null) {
@@ -269,6 +267,7 @@ class LayoutBuildCoordinator extends BuildCoordinator {
 class _InFlyConverter extends DelegatingMap<String, Map<String, dynamic>> {
   final Map<String, Map<String, dynamic>> _map;
   final DelegateDataProcessor dataProcessor;
+
   _InFlyConverter(this.dataProcessor, this._map) : super(_map);
 
   @override

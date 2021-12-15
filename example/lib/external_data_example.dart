@@ -4,6 +4,8 @@ import 'package:yet_another_layout_builder/yet_another_layout_builder.dart'
     as yalb;
 
 class ExternalDataExample extends StatefulWidget {
+  const ExternalDataExample({Key? key}) : super(key: key);
+
   @override
   State<StatefulWidget> createState() => _ExternalDataState();
 }

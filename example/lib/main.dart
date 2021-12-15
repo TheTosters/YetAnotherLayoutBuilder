@@ -46,13 +46,13 @@ class _SelectorState extends State<MyHomePage> {
           child: Column(
             children: [
               TextButton(
-                  onPressed: () => _goto(StyleExample()),
+                  onPressed: () => _goto(const StyleExample()),
                   child: const Text("Style example")),
               TextButton(
-                  onPressed: () => _goto(ExternalDataExample()),
+                  onPressed: () => _goto(const ExternalDataExample()),
                   child: const Text("External Data example")),
               TextButton(
-                  onPressed: () => _goto(BlocksExample()),
+                  onPressed: () => _goto(const BlocksExample()),
                   child: const Text("Blocks example"))
             ],
           ),

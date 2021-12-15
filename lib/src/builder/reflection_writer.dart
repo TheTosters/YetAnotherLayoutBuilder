@@ -1,5 +1,4 @@
 import 'package:analyzer/dart/element/nullability_suffix.dart';
-import 'package:collection/collection.dart';
 import 'package:analyzer/dart/element/element.dart';
 
 import 'annotations.dart';
