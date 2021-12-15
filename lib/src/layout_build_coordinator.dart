@@ -155,9 +155,17 @@ class LayoutBuildCoordinator extends BuildCoordinator {
   @override
   void step(BuildAction action, ParsedItem item) {
     if (item.type == ParsedItemType.owner &&
-        action == BuildAction.goLevelUp &&
         item.extObj == trueContainerMarker) {
-      containersData.removeLast();
+
+      if (action == BuildAction.goLevelUp) {
+        containersData.removeLast();
+      }
+      if (action == BuildAction.finaliseItem) {
+        //This is needed to process constValues of unresolved primitive types
+        //like int, double, bool collected from constValues
+        final parseItem = Registry._items[item.name]!;
+        parseItem.dataProcessor(item.data.data);
+      }
     }
   }
 
