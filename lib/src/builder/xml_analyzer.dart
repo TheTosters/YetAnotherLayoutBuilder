@@ -36,6 +36,10 @@ class XmlAnalyzer {
         final ignoreAsChildren = const {"YalbStyle", "YalbBlockDef"};
         if (!ignoreAsChildren.contains(subEl.name.toString())) {
           childCount++;
+          //factory count as 2 children (since it will build list of children)
+          if (subEl.name.toString() == "YalbWidgetFactory") {
+            childCount++;
+          }
         }
       }
     }

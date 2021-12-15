@@ -67,3 +67,17 @@ Action _yalbStyleDelegate(dynamic context, dynamic data) {
   ctx.value = wData.data;
   return Action.proceed;
 }
+
+Action _widgetFactoryDelegate(dynamic context, dynamic data) {
+  final LayoutBuildContext lbc = context;
+  final WidgetData wData = data;
+  wData.buildContext = lbc.buildContext;
+  final FactoryProvider provider = wData["provider"];
+  final List<WidgetFactoryItem> items = provider();
+  for (var item in items) {
+    lbc.widget = wData.blockProvider(
+        lbc.buildContext, item.blockName, item.injectableData);
+    wData.parentChildren!.add(lbc.widget!);
+  }
+  return Action.proceed;
+}

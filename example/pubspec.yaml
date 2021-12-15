@@ -30,3 +30,4 @@ flutter:
     - assets/styles.xml
     - assets/external_data.xml
     - assets/blocks.xml
+    - assets/listview.xml

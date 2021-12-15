@@ -36,6 +36,10 @@ class StylesCollector {
       return result;
     }
     for(var styleName in usedStyles) {
+      if (styleName.startsWith("\$")) {
+        //Skip injectable styles
+        continue;
+      }
       final attribs = styles[styleName];
       if (attribs == null) {
         final reason = "Widget '$widgetClass' refers to style named "

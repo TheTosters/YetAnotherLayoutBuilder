@@ -4,6 +4,7 @@ import 'package:processing_tree/tree_builder.dart';
 import 'package:collection/collection.dart';
 
 import '../yet_another_layout_builder.dart';
+import '../types.dart';
 import 'injector.dart';
 
 part 'delegates.dart';
@@ -13,10 +14,6 @@ part 'processors.dart';
 part 'value_builders.dart';
 
 part 'nodes.dart';
-
-/// Widget provider signature for YalbBlock node attribute *provider*.
-typedef BlockProvider = material.Widget Function(
-    material.BuildContext context, String blockName, Map<String, dynamic> data);
 
 typedef DelegateDataProcessor = dynamic Function(Map<String, dynamic> inData);
 typedef WidgetBuilder = material.Widget Function(WidgetData data);
