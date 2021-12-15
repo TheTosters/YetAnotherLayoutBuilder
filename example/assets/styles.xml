@@ -1,20 +1,19 @@
 <YalbTree>
+    <!-- Shows simple structure which uses YalbStyle node to deliver set of attributes to other
+    nodes. -->
+    <YalbStyle name="Pink">
+        <_color a="255" b="250" g="0" r="233" />
+        <_padding __EdgeInsets="" value="15" />
+        <_height value="100" />
+    </YalbStyle>
+    <YalbStyle name="Yellow">
+        <_color a="255" b="100" g="233" r="233" />
+        <_padding __EdgeInsets="" value="15" />
+        <_height value="50" />
+    </YalbStyle>
+
     <Center>
-        <!-- Shows simple structure which uses YalbStyle node to deliver set of attributes to other
-        nodes. -->
         <Container width="300">
-            <YalbStyle name="Pink">
-                <_color a="255" b="250" g="0" r="233" />
-                <_padding __EdgeInsets="" value="15" />
-                <_height value="100" />
-            </YalbStyle>
-
-            <YalbStyle name="Yellow">
-                <_color a="255" b="100" g="233" r="233" />
-                <_padding __EdgeInsets="" value="15" />
-                <_height value="50" />
-            </YalbStyle>
-
             <Column>
                 <Container _yalbStyle="Pink">
                     <Text data="Pink Style" />

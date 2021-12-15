@@ -73,7 +73,7 @@ class MultiTreeBuilder {
       final blockBuilder = blocks[name]!;
       blockBuilder.updateObjects(data);
       return blockBuilder.build(buildContext);
-    });
+    }, styles);
     XmlTreeBuilder builder = XmlTreeBuilder.coordinated(coordinator);
     final processor = builder.buildFrom(root).inverted();
     return TreeSurrounding(
@@ -91,12 +91,20 @@ class MultiTreeBuilder {
   }
 
   void _styleBuilder(XmlElement root, ExtObjectMap ext) {
-    final result = null;
     final name = root.getAttribute("name");
     if (name == null || name.isEmpty) {
       throw TreeBuilderException(
           "Style need to have 'name' attribute: ${root.toXmlString()}");
     }
-    styles[name] = result;
+
+    final injector = Injector(ext);
+    LayoutBuildCoordinator coordinator = LayoutBuildCoordinator(injector,
+            (buildContext, name, data) => Container(), styles);
+    XmlTreeBuilder builder = XmlTreeBuilder.coordinated(coordinator);
+    final processor = builder.buildFrom(root).inverted();
+    KeyValue tmp = KeyValue("", null);
+    processor.process(tmp);
+    tmp.value.remove("name"); //remove name attribute, it's name of style
+    styles[name] = tmp.value;
   }
 }

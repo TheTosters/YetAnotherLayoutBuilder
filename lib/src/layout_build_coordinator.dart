@@ -108,13 +108,13 @@ class Registry {
 
 class LayoutBuildCoordinator extends BuildCoordinator {
   final Injector injector;
-  final Map<String, Map<String, dynamic>> styles = {};
+  final Map<String, Map<String, dynamic>> styles;
   final List<List<material.Widget>> childrenLists = [];
   final trueContainerMarker = Object();
   final BlockProvider blockProvider;
   List<WidgetData> containersData = [];
 
-  LayoutBuildCoordinator(this.injector, this.blockProvider) {
+  LayoutBuildCoordinator(this.injector, this.blockProvider, this.styles) {
     containersData
         .add(WidgetData(null, blockProvider, _dummyBuilder, {})..children = []);
   }
@@ -157,18 +157,6 @@ class LayoutBuildCoordinator extends BuildCoordinator {
       final item = Registry._items[state.delegateName]!;
       delegate = item.delegate;
       itemType = item.itemType;
-
-      if (item.itemType == ParsedItemType.constValue) {
-        //Special nodes
-        injector.inject(state.data, false);
-        if (state.delegateName == "YalbStyle") {
-          final converter = _InFlyConverter(item.dataProcessor, styles);
-          outData = ConstData(
-              state.data["name"], "", _constValueNOPBuilder, converter);
-          return ParsedItem.from(state, delegate, outData, itemType);
-        }
-        throw Exception("Internal error");
-      }
 
       injector.inject(state.data, true);
       _applyStyleInfoIfNeeded(state.delegateName, state.data);

@@ -58,14 +58,12 @@ Action _blockDelegate(dynamic context, dynamic data) {
   return Action.proceed;
 }
 
+/// Special delegate to handle YalbStyle, which is detected by coordinator as
+/// [Widget], but in reality it's used just to collect attributes. This delegate
+/// extract those data and pass it to context.
 Action _yalbStyleDelegate(dynamic context, dynamic data) {
   KeyValue ctx = context;
-  final ConstData cData = data;
-  if (ctx.value == null || ctx.value.isEmpty) {
-    throw Exception("YalbStyle node must have at least one attribute node!");
-  }
-  //cData.data points to BuildCoordinator.styles map!
-  cData.data[cData.parentName] = ctx.value;
-  ctx.value = null;
+  final WidgetData wData = data;
+  ctx.value = wData.data;
   return Action.proceed;
 }
