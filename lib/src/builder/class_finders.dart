@@ -200,32 +200,73 @@ class GenericClassFinder {
 
   ConstructorElement? _matchingConstructor(
       ClassElement clazz, Set<String> wanted) {
-    if (hasAnnotation(clazz, "MatchAnyConstructor")) {
-      return clazz.constructors.first;
-    }
-    //no params at all
-    if (wanted.isEmpty) {
-      for (var ctr in clazz.constructors) {
-        if (ctr.parameters.isEmpty) {
-          return ctr;
-        }
-        final requiredParams = ctr.parameters
-            .any((p) => p.isRequiredNamed || p.isRequiredPositional);
-        if (!requiredParams) {
-          return ctr;
-        }
-      }
-      return null;
-    }
-    //Normal search, wanted must be subset of constructor params
-    for (var ctr in clazz.constructors) {
-      Set<String> allParams = ctr.parameters.map((param) => param.name).toSet();
-      if (allParams.containsAll(wanted)) {
-        return ctr;
+    final matchers = const [
+      _matchAnnotedAsMatchAny,
+      _matchNoRequiredParams,
+      _matchByParamNames,
+    ];
+    for(var matcher in matchers) {
+      final result = matcher(clazz, wanted);
+      if (result != null) {
+        return result;
       }
     }
     return null;
   }
+}
+
+/// Constructor matcher which covers following case:
+/// - wanted params are subset of params in constructor
+/// - if constructor has required params, it must exist is [wantedParams]
+/// - if [wantedParams] have param named *child* constructor must have one of
+/// params *children* or *child*.
+///
+/// Match: if params are found in constructor
+ConstructorElement? _matchByParamNames(ClassElement clazz, Set<String> wantedParams) {
+  final childSpecialCase = wantedParams.contains("child");
+  for (var ctr in clazz.constructors) {
+    Set<String> allParams = ctr.parameters.map((param) => param.name).toSet();
+    if (allParams.containsAll(wantedParams)) {
+      return ctr;
+    }
+    //Special case: wanted have child, but allParam expect children. This is
+    //also match!
+    if (childSpecialCase) {
+      final iterator = wantedParams.map((e) => e == "child" ? "children" : e);
+      if (allParams.containsAll(iterator)) {
+        return ctr;
+      }
+    }
+  }
+  return null;
+}
+
+/// Constructor matcher which covers following case:
+/// - class is annotated with [MatchAnyConstructor] annotation
+///
+/// Match: if annotation is used, any constructor is returned
+ConstructorElement? _matchAnnotedAsMatchAny(ClassElement clazz, Set<String> wantedParams) {
+  return hasAnnotation(clazz, "MatchAnyConstructor") ? clazz.constructors.first : null;
+}
+
+/// Constructor matcher which covers following case:
+/// - wantedParams is empty
+///
+/// Match: If constructor don't have any required params (all optional or non)
+ConstructorElement? _matchNoRequiredParams(ClassElement clazz, Set<String> wantedParams) {
+  if (wantedParams.isEmpty) {
+    for (var ctr in clazz.constructors) {
+      if (ctr.parameters.isEmpty) {
+        return ctr;
+      }
+      final requiredParams = ctr.parameters
+          .any((p) => p.isRequiredNamed || p.isRequiredPositional);
+      if (!requiredParams) {
+        return ctr;
+      }
+    }
+  }
+  return null;
 }
 
 ElementAnnotation? findAnnotation(Element e, String annotationName) {
