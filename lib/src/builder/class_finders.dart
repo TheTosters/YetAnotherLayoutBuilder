@@ -210,7 +210,7 @@ class GenericClassFinder {
       _matchNoRequiredParams,
       _matchByParamNames,
     ];
-    for(var matcher in matchers) {
+    for (var matcher in matchers) {
       final result = matcher(clazz, wanted);
       if (result != null) {
         return result;
@@ -227,7 +227,8 @@ class GenericClassFinder {
 /// params *children* or *child*.
 ///
 /// Match: if params are found in constructor
-ConstructorElement? _matchByParamNames(ClassElement clazz, Set<String> wantedParams) {
+ConstructorElement? _matchByParamNames(
+    ClassElement clazz, Set<String> wantedParams) {
   final childSpecialCase = wantedParams.contains("child");
   for (var ctr in clazz.constructors) {
     Set<String> allParams = ctr.parameters.map((param) => param.name).toSet();
@@ -250,15 +251,19 @@ ConstructorElement? _matchByParamNames(ClassElement clazz, Set<String> wantedPar
 /// - class is annotated with [MatchAnyConstructor] annotation
 ///
 /// Match: if annotation is used, any constructor is returned
-ConstructorElement? _matchAnnotedAsMatchAny(ClassElement clazz, Set<String> wantedParams) {
-  return hasAnnotation(clazz, "MatchAnyConstructor") ? clazz.constructors.first : null;
+ConstructorElement? _matchAnnotedAsMatchAny(
+    ClassElement clazz, Set<String> wantedParams) {
+  return hasAnnotation(clazz, "MatchAnyConstructor")
+      ? clazz.constructors.first
+      : null;
 }
 
 /// Constructor matcher which covers following case:
 /// - wantedParams is empty
 ///
 /// Match: If constructor don't have any required params (all optional or non)
-ConstructorElement? _matchNoRequiredParams(ClassElement clazz, Set<String> wantedParams) {
+ConstructorElement? _matchNoRequiredParams(
+    ClassElement clazz, Set<String> wantedParams) {
   if (wantedParams.isEmpty) {
     for (var ctr in clazz.constructors) {
       if (ctr.parameters.isEmpty) {

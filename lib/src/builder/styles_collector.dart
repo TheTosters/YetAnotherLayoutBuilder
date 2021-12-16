@@ -35,7 +35,7 @@ class StylesCollector {
     if (usedStyles == null) {
       return result;
     }
-    for(var styleName in usedStyles) {
+    for (var styleName in usedStyles) {
       if (styleName.startsWith("\$")) {
         //Skip injectable styles
         continue;

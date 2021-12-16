@@ -36,30 +36,30 @@ class _BlocksState extends State<InteractionExample> {
                   "onTextChange": _onTextChange,
                   "onTextEditDone": _onTextEditDone,
                   "onBtnPressed": _onBtnPressed
-
                 });
-                builder?.updateObjects({"checked": editState, "enteredText": enteredText});
+                builder?.updateObjects(
+                    {"checked": editState, "enteredText": enteredText});
                 return builder!.build(context);
               }
               return const CircularProgressIndicator();
             }));
   }
 
-  void _onCheckboxChange(bool? value){
-    setState( () => editState = value!);
+  void _onCheckboxChange(bool? value) {
+    setState(() => editState = value!);
   }
 
-  void _onTextChange(String value){
-    enteredText = value;  //No SetState! We don't want to rebuild layout
+  void _onTextChange(String value) {
+    enteredText = value; //No SetState! We don't want to rebuild layout
   }
 
   void _onTextEditDone() {
-    setState((){}); //Just rebuild layout
+    setState(() {}); //Just rebuild layout
   }
 
   void _onBtnPressed() {
     //since changes from edit box is done in _onTextChange field enteredText is
     //already up to date, we need just to rebuild layout to see it in text field
-    setState((){}); //Just rebuild layout
+    setState(() {}); //Just rebuild layout
   }
 }

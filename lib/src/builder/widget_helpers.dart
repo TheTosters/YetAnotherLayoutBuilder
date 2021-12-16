@@ -22,10 +22,10 @@ Parentship parentshipFromConstructor(ConstructorElement constructor) {
 /// Assign new parentship to widget but only if ```p``` indicates more
 /// children then is already assigned.
 void combineParentship(FoundWidget widget, Parentship p) {
-  if (widget.parentship == Parentship.noChildren && p != Parentship.noChildren) {
+  if (widget.parentship == Parentship.noChildren &&
+      p != Parentship.noChildren) {
     widget.parentship = p;
-    widget.attributes.add( p == Parentship.oneChild ? "child" : "children");
-
+    widget.attributes.add(p == Parentship.oneChild ? "child" : "children");
   } else if (widget.parentship == Parentship.oneChild &&
       p == Parentship.multipleChildren) {
     widget.parentship = p;
@@ -64,13 +64,13 @@ void widgetsCompact(
 
 void addStyleRelatedAttributes(List<FoundWidget> widgets,
     ClassConstructorsCollector collector, StylesCollector styles) {
-  for(var widget in widgets) {
+  for (var widget in widgets) {
     final ctr = collector.constructorsFor(widget.name).firstOrNull;
     if (ctr != null) {
       final extraAttribs = styles.styledAttributesFor(widget.name);
       // add extra attributes to widget, but only those which present at
       // found constructor
-      for(var ea in extraAttribs) {
+      for (var ea in extraAttribs) {
         final eaName = ea;
         final exists = ctr.constructor!.parameters.any((p) => p.name == eaName);
         if (exists) {

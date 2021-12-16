@@ -27,9 +27,8 @@ class _BlocksState extends State<ListViewExample> {
             future: _loadFileContent("assets/listview.xml"),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-                builder ??= yalb.LayoutBuilder(snapshot.data!, {
-                  "prv": _factoryDataProvider
-                });
+                builder ??= yalb.LayoutBuilder(
+                    snapshot.data!, {"prv": _factoryDataProvider});
                 return builder!.build(context);
               }
               return const CircularProgressIndicator();
@@ -40,7 +39,7 @@ class _BlocksState extends State<ListViewExample> {
     final result = [
       yalb.WidgetFactoryItem("HeaderBlock", {"headerText": "List header"}),
     ];
-    for(int t = 0; t < 10; t++) {
+    for (int t = 0; t < 10; t++) {
       result.add(
         yalb.WidgetFactoryItem("RowBlock", {
           "styleName": t % 2 == 0 ? "LightGray" : "DarkGray",

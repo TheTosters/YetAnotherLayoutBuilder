@@ -1,8 +1,8 @@
 import 'package:processing_tree/processing_tree.dart';
 import 'package:processing_tree/tree_builder.dart';
 import 'package:xml/xml.dart';
-import 'package:yet_another_layout_builder/src/block_builder.dart';
 
+import 'block_builder.dart';
 import 'injector.dart';
 import 'layout_build_coordinator.dart';
 import 'stylist.dart';
@@ -50,12 +50,11 @@ class MultiTreeBuilder {
 
   TreeSurrounding _parseWidgetBranch(XmlElement root, ExtObjectMap ext) {
     final injector = Injector(ext);
-    LayoutBuildCoordinator coordinator = LayoutBuildCoordinator(injector,
-           blockProvider, stylist);
+    LayoutBuildCoordinator coordinator =
+        LayoutBuildCoordinator(injector, blockProvider, stylist);
     XmlTreeBuilder builder = XmlTreeBuilder.coordinated(coordinator);
     final processor = builder.buildFrom(root).inverted();
-    return TreeSurrounding(
-        processor, injector, coordinator.childrenLists);
+    return TreeSurrounding(processor, injector, coordinator.childrenLists);
   }
 
   void _blockBuilder(XmlElement root, ExtObjectMap ext) {
@@ -76,8 +75,8 @@ class MultiTreeBuilder {
     }
 
     final injector = Injector(ext);
-    LayoutBuildCoordinator coordinator = LayoutBuildCoordinator(injector,
-            blockProvider, stylist);
+    LayoutBuildCoordinator coordinator =
+        LayoutBuildCoordinator(injector, blockProvider, stylist);
     XmlTreeBuilder builder = XmlTreeBuilder.coordinated(coordinator);
     final processor = builder.buildFrom(root).inverted();
     KeyValue tmp = KeyValue("", null);

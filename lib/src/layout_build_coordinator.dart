@@ -2,10 +2,11 @@ import 'package:flutter/material.dart' as material;
 import 'package:processing_tree/processing_tree.dart';
 import 'package:processing_tree/tree_builder.dart';
 
-import '../yet_another_layout_builder.dart';
 import 'block_builder.dart';
+import 'stylist.dart';
 import 'types.dart';
 import 'injector.dart';
+import 'layout_builder.dart';
 
 part 'delegates.dart';
 
@@ -39,8 +40,8 @@ class WidgetData {
   final DelegateDataProcessor? paramProcessor;
   final List<material.Widget>? parentChildren; //our siblings
 
-  WidgetData(this.parentChildren, this.blockBuilder, this.stylist,
-      this.builder, this.data, this.paramProcessor);
+  WidgetData(this.parentChildren, this.blockBuilder, this.stylist, this.builder,
+      this.data, this.paramProcessor);
 
   operator [](String key) => data[key];
 
@@ -124,7 +125,6 @@ class LayoutBuildCoordinator extends BuildCoordinator {
   void step(BuildAction action, ParsedItem item) {
     if (item.type == ParsedItemType.owner &&
         item.extObj == trueContainerMarker) {
-
       if (action == BuildAction.goLevelUp) {
         containersData.removeLast();
       }

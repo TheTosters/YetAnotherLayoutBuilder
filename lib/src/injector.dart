@@ -1,4 +1,3 @@
-
 import 'dart:collection';
 import 'types.dart';
 
@@ -39,7 +38,7 @@ class TrackedValue with IterableMixin<TrackedValue> {
 class Injector {
   final ExtObjectMap injectables;
   final Map<String, TrackedValue> _objectUsageMap = {};
-  
+
   Injector(this.injectables);
 
   Iterable<String> get namesOfUsedInjectables => _objectUsageMap.keys;
@@ -94,16 +93,16 @@ class Injector {
   /// {"A": 24}
   /// ```
   /// will replace in all collections previous value of ```A``` which was 12
-  /// into new 24, injected ```B``` will be unchanged. 
+  /// into new 24, injected ```B``` will be unchanged.
   void reInject(ExtObjectMap objects) {
-    for(var entry in objects.entries) {
+    for (var entry in objects.entries) {
       final destQueue = _objectUsageMap[entry.key];
       if (destQueue == null) {
         print("WARN updateObjects: Object with key ${entry.key} is given but"
             " it's not used in build widget process.");
         continue;
       }
-      for(var d in destQueue) {
+      for (var d in destQueue) {
         d.destMap[d.keyName] = entry.value;
       }
     }

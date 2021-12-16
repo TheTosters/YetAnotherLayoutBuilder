@@ -9,7 +9,6 @@ const Map<CodeSnippets, String> _codeSnippetsPool = {
       this[key] = values.firstWhere((d) => d.toString() == tmp);
     }
   }''',
-
   CodeSnippets.mapStringToInt: r'''
   void updateInt(String key) {
     if (containsKey(key)) {
@@ -25,7 +24,6 @@ const Map<CodeSnippets, String> _codeSnippetsPool = {
       updateInt(s);
     }
   }''',
-
   CodeSnippets.mapStringToDouble: r'''
   void updateDouble(String key) {
     if (containsKey(key)) {
@@ -41,7 +39,6 @@ const Map<CodeSnippets, String> _codeSnippetsPool = {
       updateDouble(s);
     }
   }''',
-
   CodeSnippets.mapStringToBool: r'''  
   void updateBool(String key) {
     if (containsKey(key)) {
@@ -57,12 +54,10 @@ const Map<CodeSnippets, String> _codeSnippetsPool = {
       updateBool(s);
     }
   }''',
-
   CodeSnippets.parseInt: r'''
 int? _improvedIntParse(String value) {
   return int.tryParse(value) ?? int.parse(value, radix: 16);
 }''',
-
   CodeSnippets.parseIntForColor: r'''
 int? _parseIntForColor(String v) {
   if (v.startsWith("#")) {

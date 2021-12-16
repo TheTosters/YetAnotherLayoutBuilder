@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:yet_another_layout_builder/src/block_builder.dart';
 
+import 'block_builder.dart';
 import 'multi_tree_builder.dart';
 import 'tree_surrounding.dart';
 

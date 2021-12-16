@@ -5,10 +5,7 @@ import '../builder/annotations.dart';
 @MatchAnyConstructor()
 class YalbStyle {
   YalbStyle({
-    @ConvertFunction.withFunc("double.tryParse", true, [])
-    double? width,
-
-    @ConvertFunction.withFunc("double.tryParse", true, [])
-    double? height,
+    @ConvertFunction.withFunc("double.tryParse", true, []) double? width,
+    @ConvertFunction.withFunc("double.tryParse", true, []) double? height,
   });
 }

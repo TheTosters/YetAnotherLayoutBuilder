@@ -1,4 +1,3 @@
-
 void registerItems() {
   //Nothing yet
 }
