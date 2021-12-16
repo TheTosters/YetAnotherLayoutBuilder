@@ -31,3 +31,4 @@ flutter:
     - assets/external_data.xml
     - assets/blocks.xml
     - assets/listview.xml
+    - assets/interaction.xml

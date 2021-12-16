@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'interaction_example.dart';
 import 'listview_example.dart';
 import 'widget_repository.g.dart';
 import 'custom_registry.dart';
@@ -57,7 +58,10 @@ class _SelectorState extends State<MyHomePage> {
                   child: const Text("Blocks example")),
               TextButton(
                   onPressed: () => _goto(const ListViewExample()),
-                  child: const Text("List View example"))
+                  child: const Text("List View example")),
+              TextButton(
+                  onPressed: () => _goto(const InteractionExample()),
+                  child: const Text("Interaction example"))
             ],
           ),
         ));

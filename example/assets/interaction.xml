@@ -1,0 +1,24 @@
+<Center>
+    <Container width="300">
+        <Column>
+            <Row>
+                <Text data="Checkbox to click" />
+                <Checkbox onChanged="@onCheckboxChange" value="@checked" />
+            </Row>
+            <Row>
+                <Text data="Enter value:" />
+                <Container width="100">
+                    <_margin __EdgeInsets="" bottom="15" left="0" top="0" right="0"/>
+                    <TextField onChanged="@onTextChange" onEditingComplete="@onTextEditDone" />
+                </Container>
+                <TextButton onPressed="@onBtnPressed">
+                    <Text data="Update text" />
+                </TextButton>
+            </Row>
+            <Row>
+                <Text data="Text which you entered:" />
+                <Text data="$enteredText" />
+            </Row>
+        </Column>
+    </Container>
+</Center>
