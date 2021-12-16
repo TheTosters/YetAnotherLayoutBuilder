@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart' as material;
-
 typedef DelegateDataProcessor = dynamic Function(Map<String, dynamic> inData);
 
 /// Typedef for arguments which represents external object map given to

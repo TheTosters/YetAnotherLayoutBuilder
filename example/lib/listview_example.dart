@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yet_another_layout_builder/yet_another_layout_builder.dart'
     as yalb;
-import 'package:yet_another_layout_builder/yet_another_layout_builder.dart';
 
 class ListViewExample extends StatefulWidget {
   const ListViewExample({Key? key}) : super(key: key);
