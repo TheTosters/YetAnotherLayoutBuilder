@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart' as material;
 import 'package:processing_tree/processing_tree.dart';
 import 'package:processing_tree/tree_builder.dart';
-import 'package:collection/collection.dart';
 
 import '../yet_another_layout_builder.dart';
-import '../types.dart';
+import 'block_builder.dart';
+import 'types.dart';
 import 'injector.dart';
 
 part 'delegates.dart';
@@ -15,7 +15,6 @@ part 'value_builders.dart';
 
 part 'nodes.dart';
 
-typedef DelegateDataProcessor = dynamic Function(Map<String, dynamic> inData);
 typedef WidgetBuilder = material.Widget Function(WidgetData data);
 typedef ConstBuilder = dynamic Function(
     String parent, Map<String, dynamic> data);
@@ -34,10 +33,14 @@ class WidgetData {
   List<material.Widget>? children;
   late material.BuildContext buildContext;
   final WidgetBuilder builder;
-  final BlockProvider blockProvider;
+  final BlockBuilder blockBuilder;
+  final Stylist stylist;
+  //knows how convert rawData values from string to proper types
+  final DelegateDataProcessor? paramProcessor;
   final List<material.Widget>? parentChildren; //our siblings
 
-  WidgetData(this.parentChildren, this.blockProvider, this.builder, this.data);
+  WidgetData(this.parentChildren, this.blockBuilder, this.stylist,
+      this.builder, this.data, this.paramProcessor);
 
   operator [](String key) => data[key];
 
@@ -105,15 +108,16 @@ class Registry {
 
 class LayoutBuildCoordinator extends BuildCoordinator {
   final Injector injector;
-  final Map<String, Map<String, dynamic>> styles;
+  final Stylist stylist;
   final List<List<material.Widget>> childrenLists = [];
   final trueContainerMarker = Object();
-  final BlockProvider blockProvider;
+  final BlockBuilder blockProvider;
   List<WidgetData> containersData = [];
 
-  LayoutBuildCoordinator(this.injector, this.blockProvider, this.styles) {
-    containersData
-        .add(WidgetData(null, blockProvider, _dummyBuilder, {})..children = []);
+  LayoutBuildCoordinator(this.injector, this.blockProvider, this.stylist) {
+    containersData.add(
+        WidgetData(null, blockProvider, stylist, _dummyBuilder, {}, null)
+          ..children = []);
   }
 
   @override
@@ -156,10 +160,9 @@ class LayoutBuildCoordinator extends BuildCoordinator {
       itemType = item.itemType;
 
       injector.inject(state.data, true);
-      _applyStyleInfoIfNeeded(state.delegateName, state.data);
       final siblings = containersData.last.children;
-      outData = WidgetData(siblings, blockProvider, item.builder,
-          item.dataProcessor(state.data));
+      outData = WidgetData(siblings, blockProvider, stylist, item.builder,
+          item.dataProcessor(state.data), item.dataProcessor);
       if (item.isContainer) {
         outData.children = <material.Widget>[];
         childrenLists.add(outData.children!);
@@ -180,30 +183,5 @@ class LayoutBuildCoordinator extends BuildCoordinator {
       item = item.next;
     }
     return null;
-  }
-
-  void _applyStyleInfoIfNeeded(String name, Map<String, dynamic> rawData) {
-    final styleName = rawData["_yalbStyle"];
-    if (styleName != null) {
-      final styleInfo = styles[styleName];
-      if (styleInfo != null) {
-        rawData.addAll(styleInfo);
-      } else {
-        print("ERROR xml node '$name' requested yalbStyle named '$styleName'"
-            " but this style is not defined");
-      }
-    }
-  }
-}
-
-class _InFlyConverter extends DelegatingMap<String, Map<String, dynamic>> {
-  final Map<String, Map<String, dynamic>> _map;
-  final DelegateDataProcessor dataProcessor;
-
-  _InFlyConverter(this.dataProcessor, this._map) : super(_map);
-
-  @override
-  void operator []=(String key, Map<String, dynamic> value) {
-    _map[key] = dataProcessor(value);
   }
 }

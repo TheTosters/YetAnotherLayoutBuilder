@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:yet_another_layout_builder/types.dart';
 import 'package:yet_another_layout_builder/yet_another_layout_builder.dart'
     as yalb;
+import 'package:yet_another_layout_builder/yet_another_layout_builder.dart';
 
 class ListViewExample extends StatefulWidget {
   const ListViewExample({Key? key}) : super(key: key);
@@ -37,13 +37,13 @@ class _BlocksState extends State<ListViewExample> {
             }));
   }
 
-  List<WidgetFactoryItem> _factoryDataProvider() {
+  List<yalb.WidgetFactoryItem> _factoryDataProvider() {
     final result = [
-      WidgetFactoryItem("HeaderBlock", {"headerText": "List header"}),
+      yalb.WidgetFactoryItem("HeaderBlock", {"headerText": "List header"}),
     ];
     for(int t = 0; t < 10; t++) {
       result.add(
-        WidgetFactoryItem("RowBlock", {
+        yalb.WidgetFactoryItem("RowBlock", {
           "styleName": t % 2 == 0 ? "LightGray" : "DarkGray",
           "rowText": "This is $t row!"
         }),

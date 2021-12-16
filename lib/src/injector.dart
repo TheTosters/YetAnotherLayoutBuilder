@@ -1,5 +1,6 @@
 
 import 'dart:collection';
+import 'types.dart';
 
 class TrackedValueIterator implements Iterator<TrackedValue> {
   TrackedValue _cur;
@@ -36,7 +37,7 @@ class TrackedValue with IterableMixin<TrackedValue> {
 /// with corresponding value from [injectables] given in constructor. For more
 /// details refer to [inject] and [reInject] methods.
 class Injector {
-  final Map<String, dynamic> injectables;
+  final ExtObjectMap injectables;
   final Map<String, TrackedValue> _objectUsageMap = {};
   
   Injector(this.injectables);
@@ -94,7 +95,7 @@ class Injector {
   /// ```
   /// will replace in all collections previous value of ```A``` which was 12
   /// into new 24, injected ```B``` will be unchanged. 
-  void reInject(Map<String, dynamic> objects) {
+  void reInject(ExtObjectMap objects) {
     for(var entry in objects.entries) {
       final destQueue = _objectUsageMap[entry.key];
       if (destQueue == null) {

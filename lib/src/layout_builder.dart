@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:yet_another_layout_builder/src/block_builder.dart';
 
 import 'multi_tree_builder.dart';
+import 'tree_surrounding.dart';
 
 class LayoutBuildContext {
   final BuildContext buildContext;
@@ -11,7 +13,7 @@ class LayoutBuildContext {
 
 class LayoutBuilder {
   late TreeSurrounding rootWidgetBuilder;
-  final TreeSurMap blocks = {};
+  final BlockBuilder blocks = BlockBuilder();
 
   LayoutBuilder(String xmlStr, Map<String, dynamic> objects) {
     MultiTreeBuilder mBuilder = MultiTreeBuilder(blocks);

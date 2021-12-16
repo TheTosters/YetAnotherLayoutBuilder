@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart' as material;
 
-/// Widget provider signature for YalbBlock node attribute *provider*.
-typedef BlockProvider = material.Widget Function(
-    material.BuildContext context, String blockName, Map<String, dynamic> data);
+typedef DelegateDataProcessor = dynamic Function(Map<String, dynamic> inData);
+
+/// Typedef for arguments which represents external object map given to
+/// [LayoutBuilder].
+typedef ExtObjectMap = Map<String, dynamic>;
 
 /// Signature of provider function which should be used with [YalbWidgetFactory]
 typedef FactoryProvider = List<WidgetFactoryItem> Function();

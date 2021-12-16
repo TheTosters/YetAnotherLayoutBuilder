@@ -10,6 +10,9 @@ Action _widgetProducerDelegate(dynamic context, dynamic data) {
   LayoutBuildContext lbc = context;
   final WidgetData wData = data;
   wData.buildContext = lbc.buildContext;
+  //----------
+  wData.stylist.applyStyleIfNeeded("<N/A>", wData);
+  //----------
   lbc.widget = wData.builder(wData);
   wData.parentChildren!.add(lbc.widget!);
   return Action.proceed;
@@ -25,6 +28,7 @@ Action _widgetConsumeAndProduceDelegate(dynamic context, dynamic data) {
   LayoutBuildContext lbc = context;
   final WidgetData wData = data;
   wData.buildContext = lbc.buildContext;
+  wData.stylist.applyStyleIfNeeded("<N/A>", wData);
   lbc.widget = wData.builder(wData);
   wData.parentChildren!.add(lbc.widget!);
   return Action.proceed;
@@ -45,14 +49,14 @@ Action _constValueDelegate(dynamic context, dynamic data) {
 
 /// Returns any [Widget] which must be stored in [data] under key *widget* or
 /// by calling provider if there is a key *provider*. Provider must be a type of
-/// [BlockProvider].
+/// [BlockBuilder].
 Action _blockDelegate(dynamic context, dynamic data) {
   LayoutBuildContext lbc = context;
   final WidgetData wData = data;
   wData.buildContext = lbc.buildContext;
   final String? blockName = wData["name"];
   lbc.widget = (blockName != null)
-      ? wData.blockProvider(lbc.buildContext, blockName, wData.data)
+      ? wData.blockBuilder.build(blockName, wData, {})
       : wData["widget"];
   wData.parentChildren!.add(lbc.widget!);
   return Action.proceed;
@@ -72,11 +76,14 @@ Action _widgetFactoryDelegate(dynamic context, dynamic data) {
   final LayoutBuildContext lbc = context;
   final WidgetData wData = data;
   wData.buildContext = lbc.buildContext;
+  //---------
+  wData.stylist.applyStyleIfNeeded("<N/A>", wData);
+  //-------
   final FactoryProvider provider = wData["provider"];
   final List<WidgetFactoryItem> items = provider();
   for (var item in items) {
-    lbc.widget = wData.blockProvider(
-        lbc.buildContext, item.blockName, item.injectableData);
+    lbc.widget =
+        wData.blockBuilder.build(item.blockName, wData, item.injectableData);
     wData.parentChildren!.add(lbc.widget!);
   }
   return Action.proceed;
