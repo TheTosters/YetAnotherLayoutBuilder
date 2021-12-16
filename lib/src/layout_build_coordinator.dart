@@ -151,6 +151,7 @@ class LayoutBuildCoordinator extends BuildCoordinator {
       itemType = ParsedItemType.constValue;
 
       injector.inject(state.data, false);
+      state.data.removeWhere((key, value) => key.startsWith("__"));
       //Note: don't call item.dataProcessor for this type of node
       //decision is that builder handle processing + building in one go!
       outData = ConstData(state.parentNodeName, name, builder, state.data);
