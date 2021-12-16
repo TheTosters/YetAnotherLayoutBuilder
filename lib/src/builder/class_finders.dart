@@ -86,12 +86,14 @@ class ConstValClassFinder extends GenericClassFinder {
   ConstValClassFinder(ClassConstructorsCollector collector, Logger logger)
       : super(collector, logger);
 
-  Future<void> prepare(Resolver resolver) async {
+  Future<void> prepare(Resolver resolver, Iterable? extraPackages) async {
     List<Uri> libUri = [
       Uri.parse("package:yet_another_layout_builder/workaround.dart"),
       Uri.parse("package:flutter/painting.dart"),
-//      Uri.parse("package:flutter/material.dart"),
     ];
+    for (var ep in extraPackages ?? []) {
+      libUri.add(Uri.parse(ep));
+    }
     await _prepareLibraries(resolver, libUri);
   }
 
@@ -104,7 +106,7 @@ class WidgetClassFinder extends GenericClassFinder {
   WidgetClassFinder(ClassConstructorsCollector collector, Logger logger)
       : super(collector, logger);
 
-  Future<void> prepare(Resolver resolver) async {
+  Future<void> prepare(Resolver resolver, Iterable? extraPackages) async {
     List<Uri> libUri = [
       Uri.parse("package:yet_another_layout_builder/special_nodes.dart"),
       Uri.parse("package:flutter/widgets.dart"),
@@ -112,6 +114,9 @@ class WidgetClassFinder extends GenericClassFinder {
       Uri.parse("package:flutter/cupertino.dart"),
       Uri.parse("package:flutter/rendering.dart"),
     ];
+    for (var ep in extraPackages ?? []) {
+      libUri.add(Uri.parse(ep));
+    }
     await _prepareLibraries(resolver, libUri);
   }
 

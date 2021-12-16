@@ -37,7 +37,7 @@ class WidgetRepositoryBuilder implements Builder {
 
     final stylesCollector = StylesCollector(logger);
     final xmlAnalyzer = XmlAnalyzer(logger, progressCollector,
-        options.config["ignore_nodes"], stylesCollector);
+        options.config["ignore_nodes"] ?? [], stylesCollector);
 
     PathMatcher excluder = PathMatcher(options.config["ignore_input"]);
     await for (final input in buildStep.findAssets(_allFilesInAssets)) {
@@ -85,11 +85,13 @@ class WidgetRepositoryBuilder implements Builder {
     final collector = ClassConstructorsCollector();
 
     final widgetResolver = WidgetClassFinder(collector, logger);
-    await widgetResolver.prepare(buildStep.resolver);
+    await widgetResolver.prepare(
+        buildStep.resolver, options.config["extra_widget_packages"]);
     widgetResolver.process(allWidgets);
 
     final constResolver = ConstValClassFinder(collector, logger);
-    await constResolver.prepare(buildStep.resolver);
+    await constResolver.prepare(
+        buildStep.resolver, options.config["extra_attribute_packages"]);
     constResolver.process(allConsts);
 
     widgetsCompact(widgets, collector);
