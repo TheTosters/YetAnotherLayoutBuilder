@@ -45,7 +45,10 @@ const Map<CodeSnippets, String> _codeSnippetsPool = {
   CodeSnippets.mapStringToBool: r'''  
   void updateBool(String key) {
     if (containsKey(key)) {
-      this[key] = (this[key]!).toLowerCase() == 'true';
+      final value = this[key]!;
+      if (value is! bool) {
+        this[key] = value.toLowerCase() == 'true';
+      }
     }
   }
 
