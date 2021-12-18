@@ -206,7 +206,7 @@ class GenericClassFinder {
   ConstructorElement? _matchingConstructor(
       ClassElement clazz, Set<String> wanted) {
     final matchers = const [
-      _matchAnnotedAsMatchAny,
+      _matchAnnotatedAsMatchAny,
       _matchNoRequiredParams,
       _matchByParamNames,
     ];
@@ -232,14 +232,19 @@ ConstructorElement? _matchByParamNames(
   final childSpecialCase = wantedParams.contains("child");
   for (var ctr in clazz.constructors) {
     Set<String> allParams = ctr.parameters.map((param) => param.name).toSet();
-    if (allParams.containsAll(wantedParams)) {
+    Set<String> allReqParams = ctr.parameters
+        .where((param) => param.isRequiredPositional || param.isRequiredNamed)
+        .map((param) => param.name)
+        .toSet();
+    final matchAllReq = wantedParams.containsAll(allReqParams);
+    if (allParams.containsAll(wantedParams) && matchAllReq) {
       return ctr;
     }
     //Special case: wanted have child, but allParam expect children. This is
     //also match!
     if (childSpecialCase) {
       final iterator = wantedParams.map((e) => e == "child" ? "children" : e);
-      if (allParams.containsAll(iterator)) {
+      if (allParams.containsAll(iterator) && matchAllReq) {
         return ctr;
       }
     }
@@ -251,7 +256,7 @@ ConstructorElement? _matchByParamNames(
 /// - class is annotated with [MatchAnyConstructor] annotation
 ///
 /// Match: if annotation is used, any constructor is returned
-ConstructorElement? _matchAnnotedAsMatchAny(
+ConstructorElement? _matchAnnotatedAsMatchAny(
     ClassElement clazz, Set<String> wantedParams) {
   return hasAnnotation(clazz, "MatchAnyConstructor")
       ? clazz.constructors.first
