@@ -407,6 +407,14 @@ class CodeGenerator {
   }
 
   void _generateConstSelectorMethod(List<Constructable> constructables) {
+    //Designated constructor first, then: more params -> higher in list
+    constructables.sort((a, b) {
+      if (a.designatedCtrName != null) {
+        return b.designatedCtrName == null ? -1 : 0;
+      } else {
+        return b.attributes.length - a.attributes.length;
+      }
+    });
     //function signature
     Constructable tmp = constructables.first;
     sb.write(tmp.constructor!.enclosingElement.name);
@@ -419,12 +427,20 @@ class CodeGenerator {
     sb.write(" ");
     for (var ctr in constructables) {
       sb.write(" if (");
-      _writeStringSet(ctr.attributes);
-      sb.writeln(".containsAll(data.keys)) {");
+      if (ctr.designatedCtrName != null) {
+        //Search designated ctr with key '_ctr'
+        sb.write('data["_ctr"] == "');
+        sb.write(ctr.designatedCtrName);
+        sb.writeln('") {');
+      } else {
+        //Just attributes
+        _writeStringSet(ctr.attributes);
+        sb.writeln(".containsAll(data.keys)) {");
+      }
       sb.write("    return ");
       _writeConstValBuilderName(ctr.constructor!.enclosingElement.name,
           index: index);
-      sb.write("(parent, data);\n  } else ");
+      sb.write("(parent, data);\n  } else");
       index++;
     }
     //function end

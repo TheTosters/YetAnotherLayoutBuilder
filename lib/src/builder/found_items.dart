@@ -3,7 +3,7 @@ enum Parentship { noChildren, oneChild, multipleChildren }
 /// This is widget info class, created for each xml node which is considered
 /// to be an widget for which builders should be prepared
 class FoundWidget {
-  final String name;
+  final String name; //equivalent of type name eg. "Container"
   final Set<String> attributes;
   final List<FoundConst> constItems;
   Parentship parentship = Parentship.noChildren;
@@ -18,12 +18,16 @@ class FoundConst {
   /// Type name of resulting const
   final String typeName;
 
+  //Value of type pointing attrib in form __EdgeInsets="fromLTRB" -> fromLTRB
+  final String? designatedCtrName;
+
   /// Name of attribute to which value of this const should be written after
   /// generation
   final String destAttrib;
 
   final Set<String> attributes;
 
-  FoundConst(this.typeName, this.destAttrib, Set<String> attributes)
+  FoundConst(this.typeName, this.destAttrib, Set<String> attributes,
+      this.designatedCtrName)
       : attributes = Set.unmodifiable(attributes);
 }

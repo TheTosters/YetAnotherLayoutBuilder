@@ -8,7 +8,7 @@
             <Row>
                 <Text data="Enter value:" />
                 <Container width="100">
-                    <_margin __EdgeInsets="" bottom="15"/>
+                    <_margin __EdgeInsets="only" bottom="15"/>
                     <TextField onChanged="@onTextChange" onEditingComplete="@onTextEditDone" />
                 </Container>
                 <TextButton onPressed="@onBtnPressed">

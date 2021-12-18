@@ -151,7 +151,17 @@ class LayoutBuildCoordinator extends BuildCoordinator {
       itemType = ParsedItemType.constValue;
 
       injector.inject(state.data, false);
-      state.data.removeWhere((key, value) => key.startsWith("__"));
+      String? ctrMarker;
+      state.data.removeWhere((key, value) {
+        final toDelete = key.startsWith("__");
+        if (toDelete && value?.isNotEmpty) {
+          ctrMarker = value;
+        }
+        return toDelete;
+      });
+      if (ctrMarker != null) {
+        state.data["_ctr"] = ctrMarker;
+      }
       //Note: don't call item.dataProcessor for this type of node
       //decision is that builder handle processing + building in one go!
       outData = ConstData(state.parentNodeName, name, builder, state.data);

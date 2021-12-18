@@ -94,6 +94,7 @@ class XmlAnalyzer {
   bool _handledAsChildAttrib(List<FoundConst> constItems, XmlElement subEl,
       Set<String> attributes, String path) {
     final name = subEl.name.toString();
+    String? designatedCtrName;
     if (name.startsWith("_")) {
       final realName = name.substring(1);
       attributes.add(realName);
@@ -106,11 +107,16 @@ class XmlAnalyzer {
           attribs.firstWhere((e) => e.startsWith("__"), orElse: () => realName);
       if (typeName.startsWith("__")) {
         attribs.remove(typeName); //prevent to poisson constructor search
+        designatedCtrName = subEl.getAttribute(typeName);
+        if (designatedCtrName?.isEmpty ?? false) {
+          designatedCtrName = null;
+        }
         typeName = typeName.substring(2); //skip '__'
       }
       //Capitalize name
       typeName = typeName.capitalize();
-      constItems.add(FoundConst(typeName, realName, attribs));
+      constItems
+          .add(FoundConst(typeName, realName, attribs, designatedCtrName));
       return true;
     }
     return false;

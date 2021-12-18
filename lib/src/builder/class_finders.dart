@@ -6,14 +6,20 @@ import 'package:yet_another_layout_builder/src/builder/annotations.dart';
 
 class Constructable {
   final Set<String> attributes;
+  String? designatedCtrName; //sometimes designated constructor is given
   ConstructorElement? constructor;
   bool skipBuilder = false;
   String? specialDataProcessor;
 
-  Constructable() : attributes = {};
+  Constructable()
+      : attributes = {},
+        designatedCtrName = null;
+
   Constructable.from(Constructable other)
-      : attributes = Set.unmodifiable(other.attributes);
-  Constructable.withAttributes(Set<String> attributes)
+      : attributes = Set.unmodifiable(other.attributes),
+        designatedCtrName = other.designatedCtrName;
+
+  Constructable.withAttributes(Set<String> attributes, this.designatedCtrName)
       : attributes = Set.unmodifiable(attributes);
 
   @override
@@ -25,8 +31,8 @@ class Constructable {
 class Resolvable extends Constructable {
   final String typeName;
 
-  Resolvable(this.typeName, Set<String> attributes)
-      : super.withAttributes(attributes);
+  Resolvable(this.typeName, Set<String> attributes, String? designatedCtrName)
+      : super.withAttributes(attributes, designatedCtrName);
 
   @override
   bool operator ==(Object other) =>
@@ -44,7 +50,7 @@ class ClassConstructorsCollector {
   final Map<String, List<Constructable>> _constructors = {};
 
   void addConstructor(
-      ClassElement clazz, ConstructorElement ctr, Set<String> attributes) {
+      ClassElement clazz, ConstructorElement ctr, Set<String> attributes, String? designatedCtrName) {
     final typeName = clazz.name;
     _constructors.update(typeName, (value) {
       Constructable? found;
@@ -59,11 +65,13 @@ class ClassConstructorsCollector {
           ..constructor = ctr
           ..skipBuilder = hasAnnotation(clazz, "SkipWidgetBuilder")
           ..specialDataProcessor = getSpecialDataProcessor(clazz)
+          ..designatedCtrName = designatedCtrName
           ..attributes.addAll(attributes));
       } else {
         found.attributes.addAll(attributes);
         found.skipBuilder |= hasAnnotation(clazz, "SkipWidgetBuilder");
         found.specialDataProcessor ??= getSpecialDataProcessor(clazz);
+        found.designatedCtrName ??= designatedCtrName;
       }
       return value;
     },
@@ -72,6 +80,7 @@ class ClassConstructorsCollector {
                 ..constructor = ctr
                 ..skipBuilder = hasAnnotation(clazz, "SkipWidgetBuilder")
                 ..specialDataProcessor = getSpecialDataProcessor(clazz)
+                ..designatedCtrName = designatedCtrName
                 ..attributes.addAll(attributes)
             ]);
   }
@@ -190,14 +199,19 @@ class GenericClassFinder {
       if (item.typeName != clazz.name) {
         continue;
       }
-      item.constructor = _matchingConstructor(clazz, item.attributes);
+      if (item.designatedCtrName != null) {
+        item.constructor =
+            _matchAsDesignated(clazz, item.designatedCtrName!, item.attributes);
+      } else {
+        item.constructor = _matchingConstructor(clazz, item.attributes);
+      }
       if (item.constructor == null) {
         final reason = "Item with name ${clazz.name} found as a class, however"
             " no constructor match params: ${item.attributes}";
         logger.severe(reason);
         throw Exception(reason);
       }
-      collector.addConstructor(clazz, item.constructor!, item.attributes);
+      collector.addConstructor(clazz, item.constructor!, item.attributes, item.designatedCtrName);
       items.removeAt(index);
     }
     return items.isEmpty;
@@ -220,36 +234,51 @@ class GenericClassFinder {
   }
 }
 
+ConstructorElement? _matchAsDesignated(
+    ClassElement clazz, String wantedName, Set<String> wantedParams) {
+  final childSpecialCase = wantedParams.contains("child");
+  final found = clazz.constructors.firstWhereOrNull(
+          (ctr) => ctr.name == wantedName &&
+              _paramsMeetRequirements(ctr, wantedParams, childSpecialCase));
+  return found;
+}
 /// Constructor matcher which covers following case:
 /// - wanted params are subset of params in constructor
 /// - if constructor has required params, it must exist is [wantedParams]
 /// - if [wantedParams] have param named *child* constructor must have one of
 /// params *children* or *child*.
+/// - all required params must be in [wantedParams]
 ///
 /// Match: if params are found in constructor
 ConstructorElement? _matchByParamNames(
     ClassElement clazz, Set<String> wantedParams) {
   final childSpecialCase = wantedParams.contains("child");
-  for (var ctr in clazz.constructors) {
-    Set<String> allParams = ctr.parameters.map((param) => param.name).toSet();
-    Set<String> allReqParams = ctr.parameters
-        .where((param) => param.isRequiredPositional || param.isRequiredNamed)
-        .map((param) => param.name)
-        .toSet();
-    final matchAllReq = wantedParams.containsAll(allReqParams);
-    if (allParams.containsAll(wantedParams) && matchAllReq) {
-      return ctr;
-    }
-    //Special case: wanted have child, but allParam expect children. This is
-    //also match!
-    if (childSpecialCase) {
-      final iterator = wantedParams.map((e) => e == "child" ? "children" : e);
-      if (allParams.containsAll(iterator) && matchAllReq) {
-        return ctr;
-      }
+  final found = clazz.constructors.firstWhereOrNull(
+      (ctr) => _paramsMeetRequirements(ctr, wantedParams, childSpecialCase));
+  return found;
+}
+
+/// See description of [_matchByParamNames] for details
+bool _paramsMeetRequirements(
+    ConstructorElement ctr, Set<String> wantedParams, bool childSpecialCase) {
+  Set<String> allParams = ctr.parameters.map((param) => param.name).toSet();
+  Set<String> allReqParams = ctr.parameters
+      .where((param) => param.isRequiredPositional || param.isRequiredNamed)
+      .map((param) => param.name)
+      .toSet();
+  final matchAllReq = wantedParams.containsAll(allReqParams);
+  if (allParams.containsAll(wantedParams) && matchAllReq) {
+    return true;
+  }
+  //Special case: wanted have child, but allParam expect children. This is
+  //also match!
+  if (childSpecialCase) {
+    final iterator = wantedParams.map((e) => e == "child" ? "children" : e);
+    if (allParams.containsAll(iterator) && matchAllReq) {
+      return true;
     }
   }
-  return null;
+  return false;
 }
 
 /// Constructor matcher which covers following case:
