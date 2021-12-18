@@ -127,7 +127,7 @@ Now it's time to run it and see if it works!
 
 TODO: What, why, where?
 
-## How builder works?
+## How ```LayoutBuilder``` works?
 
 Before you read this paragraph please read info about registry, and how things are designed. Ok, so
 in reality our builder is just a provider of code blocks (widget builders or other classes needed by
@@ -135,7 +135,7 @@ widgets) for registry. What code needs to be generated is decided by analyze of 
 folder assets. If for some reason you don't want to use builder it's up to you, it's totally fine to
 fill registry by manually written code.
 
-### Builder rule: Node name
+### LayoutBuilder rule: Node name
 
 Builder follows specific rules for code generation. Depending what it finds some parsers and
 extensions will be included, and sometimes not.
@@ -199,7 +199,7 @@ primitive (String, int, double, bool) then it must be used as child node, for ex
 As you can see Color class have several constructors, builder can detect it by matching node
 attributes and prepare one or several builders. All depends what it find in xml.to
 
-### Builder rule: Attribute node (const value)
+### LayoutBuilder rule: Attribute node (const value)
 
 As mentioned earlier if node starts with '_' it's considered as a parameter for parent node (widget).
 Ok we know name of attribute but what about type? There are two things which you need to know:
@@ -219,7 +219,7 @@ Ok, example:
 Color is straight forward: name and type are this same. But for padding we manually pointing
 ```EdgeInsets``` class (note capital case!).
 
-### Builder rule: Node attributes
+### LayoutBuilder rule: Node attributes
 
 As mentioned earlier, for each node attributes are collected and later used to identify proper
 constructor. So attribute names must match names of parameters in constructor. It's not necessary to
@@ -227,7 +227,7 @@ keep order (unless class have positional parameter!) however keeping it might pr
 unexpected behaviours. Please keep in mind that attributes should be used only for primitive types
 (String, int, double, bool) for all other types use _Attribute node_.
 
-### Builder rule: Children
+### LayoutBuilder rule: Children
 
 Some widgets allows (or requires) child or children. To do so just embed xml node into other xml
 node. But keep in mind that child must be a widget! Look at this:
@@ -250,7 +250,7 @@ multiple children it might look like:
   </Column>
 ```
 
-### Builder: Using external data
+### LayoutBuilder: Using external data
 
 While creating widgets there is often need to deliver some runtime information to newly created
 layout. YALB supports this in two ways:
@@ -300,6 +300,31 @@ You probably noticed that any kind of data can be passed, so it's straight forwa
 - Pass texts if any of them can be changed in runtime.
 - Pass dynamic information for special nodes (described later).
 - Pass builders for widgets like ```ListView```.
+
+### LayoutBuilder: Designated constructors
+After analyze of ```widget_repository.g.dart``` file sometimes methods with name
+```...ValSelectorAutoGen``` can be found. This is special case when several different constructors
+are used to create instance of object. There are two patterns which are used:
+
+**Compare by given attributes, code will take form:**
+```dart
+if ({"a", "b", "g", "r"}.containsAll(data.keys)) {
+  return _color0ValBuilderAutoGen(parent, data);
+}
+```
+
+**Compare by designated constructor, code will take form:**
+```dart
+if (data["_ctr"] == "only") {
+  return _edgeInsets0ValBuilderAutoGen(parent, data);
+}
+```
+Notice **_ctr** key name. This is special case, when builder detect attribute in form:
+```xml
+<_margin __EdgeInsets="only"/>
+```
+Then to ```data``` associated with this node will be added key **_ctr** with value of attribute
+which name starts with ```__```. In this case ```data["_ctr"] = "only"```.
 
 #### PITFALLS
 
@@ -384,6 +409,86 @@ When xml is parsed, all arguments from xml node are collected and passed to ```_
 which can change it as needed. But this will happen only on parse phase! When you call
 ```updateObjects``` on ```LayoutBuilder``` newly given values will not be passed to
 ```_dataProcessor```. So keep this in mind updating objects!
+
+## Builder configuration options
+As mentioned earlier Dart/Flutter build_runner is used to execute code generation for widget. There
+are some extra options which can be passed to this builder. First create file ```build.yaml``` in
+root of your project, and add following keys:
+```yaml
+targets:
+  $default:
+    builders:
+      yet_another_layout_builder|widgetRepoBuilder:
+        options:
+```
+Then add required options described in next sections.
+
+### Option: ignore_input
+Thi is list of xml files which should be ignored while parsing ```assets``` directory. Example:
+```yaml
+targets:
+  $default:
+    builders:
+      yet_another_layout_builder|widgetRepoBuilder:
+        options:
+          ignore_input:
+            - ignored.xml
+            - another_file.xml
+```
+
+### Option: ignore_nodes
+By default builder will not process any xml elements which doesn't match with classes in packages.
+However sometimes it might match some name, and for some reasons this is not wanted. To prevent such
+match use this option. Example:
+```yaml
+targets:
+  $default:
+    builders:
+      yet_another_layout_builder|widgetRepoBuilder:
+        options:
+          ignore_nodes:
+            - Container
+            - Color
+```
+
+### Option: collect_progress
+By default some basic information about parse process are collected and put as a comment into
+generated file. If this is unwanted specify this option with value ```false```. Example:
+```yaml
+targets:
+  $default:
+    builders:
+      yet_another_layout_builder|widgetRepoBuilder:
+        options:
+          collect_progress: false
+```
+
+### Option: extra_widget_packages
+By default several common flutter packages are used to find ```Widget```s. However if some 3rd party
+packages should be also used in this process please add it like:
+```yaml
+targets:
+  $default:
+    builders:
+      yet_another_layout_builder|widgetRepoBuilder:
+        options:
+          extra_widget_packages:
+            - package:flutter/painting.dart
+```
+
+### Option: extra_attribute_packages
+This option is similar to ```extra_widget_packages```, however it applies for attributes (xml
+elements started with ```_``` character). Different set of packages is used for class search, it
+can be extended in following way:
+```yaml
+targets:
+  $default:
+    builders:
+      yet_another_layout_builder|widgetRepoBuilder:
+        options:
+          extra_attribute_packages:
+            - package:flutter/painting.dart
+```
 
 ## Thanks
 
