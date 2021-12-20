@@ -241,9 +241,52 @@ Color _colorValBuilderAutoGen(String parent, Map<String, dynamic> data) {
 }
 ```
 
+### Xml Structure
+YALB supports two main structures of xml files. First one which starts directly with widget tree.
+There must be Widget component root, and then it's children and attributes. This approach disables
+usage of styles and blocks described later. Example of such xml can look like:
+```xml
+<Center>
+    <Column>
+        <Text data="Hello world!"/>
+    </Column>
+</Center>
+```
+If usage of styles or blocks is needed then xml file must have root node named ```YalbTree```. Then
+any combination of ```YalbBlockDef``` and ```YalbStyle``` nodes might be put before widget root.
+In general order of usage should be taken into consideration, before use any block or style it
+should be defined. Example of xml:
+```xml
+<YalbTree>
+    <!-- Define styles -->
+    <YalbStyle name="Pink">
+        <_color a="255" b="250" g="0" r="233" />
+    </YalbStyle>
+    <!-- more styles can be put here-->
+
+    <!-- Define blocks -->
+    <YalbBlockDef name="SomeBlock">
+        <Container _yalbStyle="Pink">
+            <Text data="This is Pink Styled Block" />
+        </Container>
+    </YalbBlockDef>
+    <!-- more blocks can be put here-->
+
+    <!-- this is root of widgets tree -->
+    <Center>
+        <Column>
+            <Text data="Hello world!"/>
+        </Column>
+    </Center>
+</YalbTree>
+```
+
+
 ### Support for styles
-YALB support simple styling, it allows to collect pack of values and give it a name. Then this name
-can be referenced by any xml element to use stored values. Again values might be any type not
+YALB support simple styling, it allows to collect pack of values and give it a name.
+Single style definition must be put in node ```<YalbStyle>``` in ```YalbTree``` parent. It must have
+unique name and must have at least one attribute node. After defining name of style can be
+referenced by any xml element to use stored values. Again values might be any type not
 necessary strings, so same as for ```addWidgetBuilder``` we can provide delegate which perform
 conversion. To register such delegate use method:
 
@@ -259,6 +302,58 @@ dynamic _yalbStyleDataProcessor(Map<String, dynamic> inData) {
   return inData;
 }
 ```
+
+### Support for blocks.
+In situations when some subtree of widgets is reused (for example in rows in list or buttons) it
+can be defined as block. Single block definition must be put in node ```<YalbBlockDef>``` in
+```YalbTree``` parent. It must have unique name and must have single root widget. From this point
+there is possible to use two other specialised nodes to put such block in widget tree. This can be
+done through nodes ```YalbBlock``` and ```YalbWidgetFactory```. Both usages are shown in examples.
+
+### How to use ```YalbBlock```
+This node comes in two flavours, shown below:
+```xml
+<YalbTree>
+    <YalbBlockDef name="PinkBlock">
+        <Container>
+            <_color value="F0F" />
+            <_padding __EdgeInsets="" value="15" />
+            <_height value="100" />
+            <Text data="This is Pink Block" />
+        </Container>
+    </YalbBlockDef>
+
+    <Center>
+        <Column>
+            <YalbBlock name="BlueBlock" />  <!-- #1 type of usage -->
+            <YalbBlock widget="@widget" />  <!-- #2 type of usage -->
+        </Column>
+    </Center>
+</YalbTree>
+```
+As shown one of two syntax can be used. If attribute ```name``` is used then proper block must be
+previously defined in ```YalbBlockDef``` node. There is also possibility to inject widget from
+outside xml, by usage of attribute ```widget```, in this situation parameter ```@widget``` must
+be injected to builder by while creating or updating builder, for example:
+```dart
+ LayoutBuilder(xmlString, {"widget" : const CircularProgressIndicator()});
+ //... and can be later replaced by
+ builder?.updateObjects({"widget" : const CircularProgressIndicator()});
+```
+
+### How to use ```YalbWidgetFactory```
+If more control over injected block is needed then ```YalbWidgetFactory``` comes in play. It expects
+one attribute named ```provider``` which must point to function with following signature:
+```dart
+List<WidgetFactoryItem> _factoryDataProvider();
+```
+Depending on application logic this function must return list with data which will be used to build
+blocks in widget tree in which node ```YalbWidgetFactory``` is used. So it's important to insert
+this node into parent which can handle one or many children. Returned ```WidgetFactoryItem```
+instances contains two elements: Unique name of block to be build, data pack which will be injected
+into block. This implies that any block which can be used with factory must be first defined in
+```YalbTree```. And for each newly created instance of block different parameters can be injected.
+Please refer to listview example for more details.
 
 ## How ```LayoutBuilder``` works?
 
