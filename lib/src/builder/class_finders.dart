@@ -49,8 +49,8 @@ class Resolvable extends Constructable {
 class ClassConstructorsCollector {
   final Map<String, List<Constructable>> _constructors = {};
 
-  void addConstructor(
-      ClassElement clazz, ConstructorElement ctr, Set<String> attributes, String? designatedCtrName) {
+  void addConstructor(ClassElement clazz, ConstructorElement ctr,
+      Set<String> attributes, String? designatedCtrName) {
     final typeName = clazz.name;
     _constructors.update(typeName, (value) {
       Constructable? found;
@@ -211,7 +211,8 @@ class GenericClassFinder {
         logger.severe(reason);
         throw Exception(reason);
       }
-      collector.addConstructor(clazz, item.constructor!, item.attributes, item.designatedCtrName);
+      collector.addConstructor(
+          clazz, item.constructor!, item.attributes, item.designatedCtrName);
       items.removeAt(index);
     }
     return items.isEmpty;
@@ -237,11 +238,12 @@ class GenericClassFinder {
 ConstructorElement? _matchAsDesignated(
     ClassElement clazz, String wantedName, Set<String> wantedParams) {
   final childSpecialCase = wantedParams.contains("child");
-  final found = clazz.constructors.firstWhereOrNull(
-          (ctr) => ctr.name == wantedName &&
-              _paramsMeetRequirements(ctr, wantedParams, childSpecialCase));
+  final found = clazz.constructors.firstWhereOrNull((ctr) =>
+      ctr.name == wantedName &&
+      _paramsMeetRequirements(ctr, wantedParams, childSpecialCase));
   return found;
 }
+
 /// Constructor matcher which covers following case:
 /// - wanted params are subset of params in constructor
 /// - if constructor has required params, it must exist is [wantedParams]
