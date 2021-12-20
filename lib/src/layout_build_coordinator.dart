@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart' as material;
 import 'package:processing_tree/processing_tree.dart';
-import 'package:processing_tree/tree_builder.dart';
 
 import 'block_builder.dart';
 import 'stylist.dart';

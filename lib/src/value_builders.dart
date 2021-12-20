@@ -14,7 +14,3 @@ part of 'layout_build_coordinator.dart';
 dynamic _constValueStringBuilder(String parent, Map<String, dynamic> data) {
   return data["value"] ?? data["data"] ?? data["text"];
 }
-
-dynamic _constValueNOPBuilder(String parent, Map<String, dynamic> data) {
-  return data;
-}

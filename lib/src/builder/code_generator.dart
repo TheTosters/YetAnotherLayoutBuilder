@@ -396,6 +396,14 @@ class CodeGenerator {
       if (constructables.length == 1) {
         _generateConstBuilderMethod(constructables[0]);
       } else if (constructables.length > 1) {
+        //Designated constructor first, then: more params -> higher in list
+        constructables.sort((a, b) {
+          if (a.designatedCtrName != null) {
+            return b.designatedCtrName == null ? -1 : 0;
+          } else {
+            return b.attributes.length - a.attributes.length;
+          }
+        });
         int index = 0;
         for (var c in constructables) {
           _generateConstBuilderMethod(c, index: index);
@@ -407,14 +415,6 @@ class CodeGenerator {
   }
 
   void _generateConstSelectorMethod(List<Constructable> constructables) {
-    //Designated constructor first, then: more params -> higher in list
-    constructables.sort((a, b) {
-      if (a.designatedCtrName != null) {
-        return b.designatedCtrName == null ? -1 : 0;
-      } else {
-        return b.attributes.length - a.attributes.length;
-      }
-    });
     //function signature
     Constructable tmp = constructables.first;
     sb.write(tmp.constructor!.enclosingElement.name);
