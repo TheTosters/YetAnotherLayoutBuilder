@@ -5,6 +5,9 @@ const Map<CodeSnippets, String> _codeSnippetsPool = {
   CodeSnippets.mapStringToEnum: r'''
   void updateEnum<T>(String key, List<T> values) {
     if (containsKey(key)) {
+      if (this[key] is T) {
+        return;
+      }
       final tmp = "${T.toString()}.${this[key]}";
       this[key] = values.firstWhere((d) => d.toString() == tmp);
     }
