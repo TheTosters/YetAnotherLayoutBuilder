@@ -44,6 +44,11 @@ class Resolvable extends Constructable {
 
   @override
   int get hashCode => typeName.hashCode;
+
+  @override
+  String toString() {
+    return 'Resolvable{typeName: $typeName}';
+  }
 }
 
 class ClassConstructorsCollector {
@@ -99,6 +104,7 @@ class ConstValClassFinder extends GenericClassFinder {
     List<Uri> libUri = [
       Uri.parse("package:yet_another_layout_builder/workaround.dart"),
       Uri.parse("package:flutter/painting.dart"),
+      Uri.parse("package:flutter/material.dart"),
     ];
     for (var ep in extraPackages ?? []) {
       libUri.add(Uri.parse(ep));

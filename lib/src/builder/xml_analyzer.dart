@@ -115,8 +115,17 @@ class XmlAnalyzer {
       }
       //Capitalize name
       typeName = typeName.capitalize();
-      constItems
-          .add(FoundConst(typeName, realName, attribs, designatedCtrName));
+      final item = FoundConst(typeName, realName, attribs, designatedCtrName);
+      constItems.add(item);
+      for (var xmlChild in subEl.childElements) {
+        if (!_handledAsChildAttrib(
+            item.constItems, xmlChild, item.attributes, path)) {
+          final reason = "All children of attribute ${item.destAttrib} must be"
+              " an attributes, but ${xmlChild.name} looks like widget";
+          logger.severe(reason);
+          throw Exception(reason);
+        }
+      }
       return true;
     }
     return false;

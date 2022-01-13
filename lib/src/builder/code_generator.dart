@@ -5,9 +5,9 @@ import 'package:yet_another_layout_builder/src/builder/code_snippets.dart';
 import 'package:yet_another_layout_builder/src/builder/reflection_writer.dart';
 
 import 'class_finders.dart';
+import 'dart_extensions.dart';
 import 'found_items.dart';
 import 'progress_collector.dart';
-import 'dart_extensions.dart';
 
 class CodeGenerator {
   final Iterable<FoundWidget> widgets;
@@ -66,19 +66,39 @@ class CodeGenerator {
     sb.writeln("void registerWidgetBuilders() {");
     for (var widget in widgets) {
       _writeWidgetBuilderRegisterCall(widget);
-      for (var constVal in widget.constItems) {
-        _writeConstBuilderRegisterCall(widget.name, constVal);
+      if (widget.name == "YalbStyle") {
+        //Style need special handling
+        for (var constVal in widget.constItems) {
+          int count = 0;
+          for (var tmp in widget.constItems) {
+            if (tmp.destAttrib == constVal.destAttrib) {
+              count++;
+            }
+          }
+          _writeConstBuilderRegisterCall(widget.name, constVal,
+              includeType: count > 1);
+        }
+      } else {
+        //Plain widgets don't need specialized builders
+        for (var constVal in widget.constItems) {
+          _writeConstBuilderRegisterCall(widget.name, constVal);
+        }
       }
     }
     sb.writeln("}\n");
   }
 
-  void _writeConstBuilderRegisterCall(String parent, FoundConst constVal) {
+  void _writeConstBuilderRegisterCall(String parent, FoundConst constVal,
+      {bool includeType = false}) {
     if (classCollector.hasConstructor(constVal.typeName)) {
       sb.write('  Registry.addValueBuilder("');
       sb.write(parent);
       sb.write('", "');
       sb.write(constVal.destAttrib);
+      if (includeType) {
+        sb.write('/');
+        sb.write(constVal.typeName);
+      }
       sb.write('", ');
       if (_isBuilderSelectorNeeded(constVal.typeName)) {
         _writeContValSelectorName(constVal.typeName);

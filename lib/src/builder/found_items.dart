@@ -10,6 +10,11 @@ class FoundWidget {
   bool useCustomDataProcessor = false;
 
   FoundWidget(this.name, this.attributes, this.constItems);
+
+  @override
+  String toString() {
+    return 'FoundWidget{name: $name}';
+  }
 }
 
 /// This class holds info needed to generate builder for any constValue node
@@ -26,8 +31,15 @@ class FoundConst {
   final String destAttrib;
 
   final Set<String> attributes;
+  final List<FoundConst> constItems;
 
   FoundConst(this.typeName, this.destAttrib, Set<String> attributes,
       this.designatedCtrName)
-      : attributes = Set.unmodifiable(attributes);
+      : attributes = Set.from(attributes),
+        constItems = [];
+
+  @override
+  String toString() {
+    return 'FoundConst{typeName: $typeName, destAttrib: $destAttrib}';
+  }
 }

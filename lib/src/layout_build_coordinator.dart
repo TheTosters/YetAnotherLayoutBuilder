@@ -1,19 +1,20 @@
+import 'package:collection/src/iterable_extensions.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:processing_tree/processing_tree.dart';
 
 import 'block_builder.dart';
-import 'stylist.dart';
-import 'types.dart';
 import 'injector.dart';
 import 'layout_builder.dart';
+import 'stylist.dart';
+import 'types.dart';
 
 part 'delegates.dart';
+
+part 'nodes.dart';
 
 part 'processors.dart';
 
 part 'value_builders.dart';
-
-part 'nodes.dart';
 
 typedef WidgetBuilder = material.Widget Function(WidgetData data);
 typedef ConstBuilder = dynamic Function(
@@ -35,6 +36,7 @@ class WidgetData {
   final WidgetBuilder builder;
   final BlockBuilder blockBuilder;
   final Stylist stylist;
+
   //knows how convert rawData values from string to proper types
   final DelegateDataProcessor? paramProcessor;
   final List<material.Widget>? parentChildren; //our siblings
@@ -54,6 +56,9 @@ class LayoutBuilderItem {
   final PNDelegate delegate;
   final DelegateDataProcessor dataProcessor;
   final bool isContainer; //can have children?
+  //special case, when more then one constValue with this same destAttirbute is
+  // given but different types can be found. Used in YalbStyle
+  final String? underlyingType;
 
   //This is only meaningful for ConstBuilder
   String? parentName;
@@ -63,7 +68,11 @@ class LayoutBuilderItem {
   LayoutBuilderItem? next;
 
   LayoutBuilderItem(this.elementName, this.isContainer, this.delegate,
-      this.builder, this.dataProcessor, this.itemType);
+      this.builder, this.dataProcessor, this.itemType)
+      : underlyingType = null;
+
+  LayoutBuilderItem.withType(this.elementName, this.isContainer, this.delegate,
+      this.builder, this.dataProcessor, this.itemType, this.underlyingType);
 }
 
 class Registry {
@@ -89,8 +98,23 @@ class Registry {
 
   static void addValueBuilder(
       String parentName, String elementName, ConstBuilder builder) {
-    final item = LayoutBuilderItem(elementName, false, _constValueDelegate,
-        builder, _nopProcessor, ParsedItemType.constValue);
+    int idx = elementName.indexOf("/");
+    LayoutBuilderItem item;
+    if (idx > 0) {
+      final extraType = elementName.substring(idx + 1);
+      item = LayoutBuilderItem.withType(
+          elementName.substring(0, idx),
+          false,
+          _constValueDelegate,
+          builder,
+          _nopProcessor,
+          ParsedItemType.constValue,
+          extraType);
+    } else {
+      item = LayoutBuilderItem(elementName, false, _constValueDelegate, builder,
+          _nopProcessor, ParsedItemType.constValue);
+    }
+
     item.parentName = parentName;
     _items.update(elementName, (existing) {
       item.next = existing;
@@ -144,7 +168,7 @@ class LayoutBuildCoordinator extends BuildCoordinator {
     dynamic extObj;
     if (state.delegateName.startsWith("_")) {
       final name = state.delegateName.substring(1);
-      final item = _findBuilderItem(state.parentNodeName, name);
+      final item = _findBuilderItem(state, name);
       final builder = item?.builder ?? _constValueStringBuilder;
       delegate = item?.delegate ?? _constValueDelegate;
       itemType = ParsedItemType.constValue;
@@ -184,14 +208,46 @@ class LayoutBuildCoordinator extends BuildCoordinator {
     return ParsedItem.from(state, delegate, outData, itemType, extObj: extObj);
   }
 
-  LayoutBuilderItem? _findBuilderItem(String parent, String name) {
-    var item = Registry._items[name];
-    while (item != null) {
-      if (item.parentName == parent) {
-        return item;
+  LayoutBuilderItem? _findBuilderItemByParentType(
+      LayoutBuilderItem? chain, String parent, String wantedType) {
+    while (chain != null) {
+      if (chain.parentName == parent && chain.underlyingType == wantedType) {
+        return chain;
       }
-      item = item.next;
+      chain = chain.next;
     }
     return null;
+  }
+
+  LayoutBuilderItem? _findBuilderItemByParent(
+      LayoutBuilderItem? chain, String parent) {
+    while (chain != null) {
+      if (chain.parentName == parent) {
+        return chain;
+      }
+      chain = chain.next;
+    }
+    return null;
+  }
+
+  LayoutBuilderItem? _findBuilderItem(BuildPhaseState state, String name) {
+    var chain = Registry._items[name];
+    if (chain == null) {
+      return null;
+    }
+    final parent = state.parentNodeName;
+    if (parent != "YalbStyle") {
+      return _findBuilderItemByParent(chain, parent);
+    }
+
+    String? wantedType =
+        state.data.keys.firstWhereOrNull((element) => element.startsWith("__"));
+    if (wantedType != null) {
+      wantedType = wantedType.substring(2);
+      return _findBuilderItemByParentType(chain, parent, wantedType);
+    } else {
+      //No type specified, fallback to parent+name search
+      return _findBuilderItemByParent(chain, parent);
+    }
   }
 }

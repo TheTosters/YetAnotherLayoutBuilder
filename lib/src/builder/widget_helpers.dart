@@ -53,7 +53,8 @@ void widgetsCompact(
       final other = widgets[t];
       if (widget.name == other.name) {
         widget.constItems.addAllIfAbsent(other.constItems,
-            (inList, toAdd) => inList.destAttrib == toAdd.destAttrib);
+            (inList, toAdd) => (inList.destAttrib == toAdd.destAttrib) &&
+                (inList.typeName == toAdd.typeName));
         widget.attributes.addAll(other.attributes);
         widgets.removeAt(t);
       }
