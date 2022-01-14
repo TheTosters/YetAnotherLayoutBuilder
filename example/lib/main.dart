@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'interaction_example.dart';
 import 'listview_example.dart';
+import 'style_2_example.dart';
 import 'widget_repository.g.dart';
 import 'custom_registry.dart';
 import 'style_example.dart';
@@ -50,6 +51,9 @@ class _SelectorState extends State<MyHomePage> {
               TextButton(
                   onPressed: () => _goto(const StyleExample()),
                   child: const Text("Style example")),
+              TextButton(
+                  onPressed: () => _goto(const StyleTwoExample()),
+                  child: const Text("Style Special case example")),
               TextButton(
                   onPressed: () => _goto(const ExternalDataExample()),
                   child: const Text("External Data example")),

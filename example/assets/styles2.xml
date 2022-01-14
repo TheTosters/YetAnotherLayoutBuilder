@@ -1,0 +1,20 @@
+<YalbTree>
+    <YalbStyle name="label">
+        <_style __TextStyle="">
+            <_color value="FF00FF" />
+        </_style>
+    </YalbStyle>
+
+    <YalbStyle name="button">
+        <_style __ButtonStyle="" backgroundColor="@buttonBkgCol"/>
+    </YalbStyle>
+
+    <SafeArea>
+        <Column>
+            <OutlinedButton _yalbStyle="button" onPressed="@onAvatarPress">
+                <Text data="This is button using style"/>
+            </OutlinedButton>
+            <Text _yalbStyle="label" data="This is label using style" />
+        </Column>
+    </SafeArea>
+</YalbTree>

@@ -28,6 +28,7 @@ flutter:
 
   assets:
     - assets/styles.xml
+    - assets/styles2.xml
     - assets/external_data.xml
     - assets/blocks.xml
     - assets/listview.xml
