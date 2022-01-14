@@ -118,7 +118,6 @@ void main() {
     for (final w in analyzer.widgets) {
       _appendConstPath(w.name + "/", w.constItems, result);
     }
-    print(result);
     expect(setEquals<String>(expConstPaths, result), true);
   });
 }

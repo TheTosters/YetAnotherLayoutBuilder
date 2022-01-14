@@ -112,7 +112,6 @@ class Registry {
     var chain = Registry._items[state.delegateName];
     if (chain != null) {
       String? wantedType = _getWantedType(state);
-      print("_findByPath: wantedType: $wantedType, path:$path");
       while (chain != null) {
         if (chain.underlyingType == wantedType && chain.fullPath == path) {
           return chain;

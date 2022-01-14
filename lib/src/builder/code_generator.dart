@@ -8,6 +8,7 @@ import 'class_finders.dart';
 import 'dart_extensions.dart';
 import 'found_items.dart';
 import 'progress_collector.dart';
+import 'widget_helpers.dart';
 
 class CodeGenerator {
   final Iterable<FoundWidget> widgets;
@@ -24,10 +25,10 @@ class CodeGenerator {
 
   String generate() {
     sb.clear();
-    Set<String> constValClasses = {};
     _generateNotice();
     _generateProgressLog();
     _generateImports();
+    List<Resolvable> allConsts = [];
     for (var widget in widgets) {
       //TODO: Currently support only one constructor for widgets
       final constructable = _widgetCtrFor(widget.name);
@@ -40,11 +41,9 @@ class CodeGenerator {
 
         _generateDataProcessorMethod(widget, constructor);
       }
-      for (var constVal in widget.constItems) {
-        //_generateConstBuilderMethod(constVal);
-        constValClasses.add(constVal.typeName);
-      }
+      collectConst(widget.constItems, allConsts);
     }
+    final constValClasses = allConsts.map((e) => e.typeName).toSet();
     _generateConstValueMethods(constValClasses);
     codeExt.writeSnippets(sb);
     _generateRegisterMethod();

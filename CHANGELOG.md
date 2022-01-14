@@ -5,6 +5,7 @@
 - Minor code cleanups and refactors.
 - Additional example for styles (nested attributes)
 - First attempt to test cases.
+- Fix: nested attributes present in styles only had no proper methods generated for registry
 
 ## 0.1.1
 
