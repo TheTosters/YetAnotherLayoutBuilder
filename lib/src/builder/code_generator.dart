@@ -52,7 +52,9 @@ class CodeGenerator {
   }
 
   Constructable? _widgetCtrFor(String typeName) {
-    return classCollector.constructorsFor(typeName).firstOrNull;
+    return classCollector
+        .constructorsFor(typeName)
+        .firstOrNull;
   }
 
   void _generateImports() {
@@ -66,39 +68,31 @@ class CodeGenerator {
     sb.writeln("void registerWidgetBuilders() {");
     for (var widget in widgets) {
       _writeWidgetBuilderRegisterCall(widget);
-      if (widget.name == "YalbStyle") {
-        //Style need special handling
-        for (var constVal in widget.constItems) {
-          int count = 0;
-          for (var tmp in widget.constItems) {
-            if (tmp.destAttrib == constVal.destAttrib) {
-              count++;
-            }
-          }
-          _writeConstBuilderRegisterCall(widget.name, constVal,
-              includeType: count > 1);
-        }
-      } else {
-        //Plain widgets don't need specialized builders
-        for (var constVal in widget.constItems) {
-          _writeConstBuilderRegisterCall(widget.name, constVal);
-        }
+      if (widget.constItems.isNotEmpty) {
+        _writeConstBuilder(widget.name, widget.constItems);
       }
     }
     sb.writeln("}\n");
   }
 
-  void _writeConstBuilderRegisterCall(String parent, FoundConst constVal,
-      {bool includeType = false}) {
+  void _writeConstBuilder(String inTreePath, List<FoundConst> constItems) {
+    for (var constVal in constItems) {
+      _writeConstBuilderRegisterCall(inTreePath, constVal);
+      if (constVal.constItems.isNotEmpty) {
+        _writeConstBuilder(
+            inTreePath + '/_' + constVal.destAttrib, constVal.constItems);
+      }
+    }
+  }
+
+  void _writeConstBuilderRegisterCall(String inTreePath, FoundConst constVal) {
     if (classCollector.hasConstructor(constVal.typeName)) {
       sb.write('  Registry.addValueBuilder("');
-      sb.write(parent);
-      sb.write('", "');
+      sb.write(inTreePath);
+      sb.write('/_');
       sb.write(constVal.destAttrib);
-      if (includeType) {
-        sb.write('/');
-        sb.write(constVal.typeName);
-      }
+      sb.write('", "');
+      sb.write(constVal.typeName);
       sb.write('", ');
       if (_isBuilderSelectorNeeded(constVal.typeName)) {
         _writeContValSelectorName(constVal.typeName);
@@ -298,10 +292,10 @@ class CodeGenerator {
         _writeComment(file.toString(), 2);
 
         final tmp =
-            progressCollector?.data[ProgressCollector.keyProcessedNodes];
+        progressCollector?.data[ProgressCollector.keyProcessedNodes];
         final nodes = (tmp?[file.toString()] as Iterable)
             .map((e) =>
-                classCollector.hasConstructor(e) ? e : "$e (not resolved)")
+        classCollector.hasConstructor(e) ? e : "$e (not resolved)")
             .toList();
         _writeCommentList("Processed nodes:", 3, nodes);
 
@@ -322,8 +316,8 @@ class CodeGenerator {
     }
   }
 
-  void _generateDataProcessorMethod(
-      FoundWidget widget, ConstructorElement ctr) {
+  void _generateDataProcessorMethod(FoundWidget widget,
+      ConstructorElement ctr) {
     if (widget.useCustomDataProcessor) {
       sb.write("dynamic ");
       _writeProcessorName(widget);
@@ -487,15 +481,16 @@ class CodeGenerator {
 
   //Detect enums or types other than String. Don't analyze constVals those are
   //processed in different way.
-  bool _needCustomDataProcessor(
-      FoundWidget widget, ConstructorElement constructor) {
+  bool _needCustomDataProcessor(FoundWidget widget,
+      ConstructorElement constructor) {
     Set<String> supported = const <String>{"int", "double", "bool"};
 
     bool result = constructor.parameters.any((p) =>
-        widget.attributes.contains(p.name) &&
+    widget.attributes.contains(p.name) &&
         (p.type.element?.kind == ElementKind.ENUM ||
             supported.contains(p.type.element?.name)));
 
     return result;
   }
+
 }

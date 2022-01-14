@@ -42,6 +42,9 @@ Action _widgetConsumeAndProduceDelegate(dynamic context, dynamic data) {
 Action _constValueDelegate(dynamic context, dynamic data) {
   KeyValue ctx = context;
   final ConstData cData = data;
+  if (ctx.value != null) {
+    cData.data.addAll(ctx.value);
+  }
   ctx.key = cData.attribName;
   ctx.value = cData.builder(cData.parentName, cData.data);
   return Action.proceed;

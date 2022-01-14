@@ -6,16 +6,11 @@ material.Widget _dummyBuilder(WidgetData inData) {
 
 Map<String, LayoutBuilderItem> _registerSpecialNodes() {
   return {
-    "YalbBlock": LayoutBuilderItem("YalbBlock", false, _blockDelegate,
-        _dummyBuilder, _nopProcessor, ParsedItemType.owner),
-    "YalbWidgetFactory": LayoutBuilderItem(
-        "YalbWidgetFactory",
-        false,
-        _widgetFactoryDelegate,
-        _dummyBuilder,
-        _nopProcessor,
-        ParsedItemType.owner),
-    "YalbStyle": LayoutBuilderItem("YalbStyle", false, _yalbStyleDelegate,
-        _dummyBuilder, _nopProcessor, ParsedItemType.constValue),
+    "YalbBlock": LayoutBuilderItem.withDelegate(
+        "YalbBlock", _blockDelegate, ParsedItemType.owner),
+    "YalbWidgetFactory": LayoutBuilderItem.withDelegate(
+        "YalbWidgetFactory", _widgetFactoryDelegate, ParsedItemType.owner),
+    "YalbStyle": LayoutBuilderItem.withDelegate(
+        "YalbStyle", _yalbStyleDelegate, ParsedItemType.constValue),
   };
 }

@@ -81,3 +81,12 @@ void addStyleRelatedAttributes(List<FoundWidget> widgets,
     }
   }
 }
+
+void collectConst(List<FoundConst> constItems, List<Resolvable> allConsts) {
+  for (var c in constItems) {
+    allConsts.add(Resolvable(c.typeName, c.attributes, c.designatedCtrName));
+    if (c.constItems.isNotEmpty) {
+      collectConst(c.constItems, allConsts);
+    }
+  }
+}
