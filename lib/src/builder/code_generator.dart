@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:collection/collection.dart';
 import 'package:logging/logging.dart';
 import 'package:yet_another_layout_builder/src/builder/code_snippets.dart';
@@ -225,7 +226,9 @@ class CodeGenerator {
     throw Exception(reason);
   }
 
-  void _writeAttribGetter(String name, bool canBeNull) {
+  void _writeAttribGetter(ParameterElement param) {
+    bool canBeNull = param.type.nullabilitySuffix == NullabilitySuffix.question;
+    final name = param.name;
     if (name == "child") {
       _childHandled = true;
       if (canBeNull) {
@@ -243,8 +246,13 @@ class CodeGenerator {
       sb.write('data["');
       sb.write(name);
       sb.write('"]');
-      if (!canBeNull) {
-        sb.write("!");
+      if (param.hasDefaultValue) {
+        sb.write(" ?? ");
+        sb.write(param.defaultValueCode);
+      } else {
+        if (!canBeNull) {
+          sb.write("!");
+        }
       }
     }
   }

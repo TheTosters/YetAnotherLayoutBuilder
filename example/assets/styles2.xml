@@ -10,7 +10,7 @@
     </YalbStyle>
 
     <SafeArea>
-        <Column>
+        <Column crossAxisAlignment="start">
             <OutlinedButton _yalbStyle="button" onPressed="@onAvatarPress">
                 <Text data="This is button using style"/>
             </OutlinedButton>

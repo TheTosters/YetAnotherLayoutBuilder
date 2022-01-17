@@ -1,3 +1,4 @@
+import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/element.dart';
 
@@ -5,7 +6,7 @@ import 'annotations.dart';
 import 'class_finders.dart';
 import 'code_snippets.dart';
 
-typedef AttribAccessWriter = void Function(String, bool);
+typedef AttribAccessWriter = void Function(ParameterElement);
 typedef VoidFunction = void Function();
 
 class ReflectionWriter {
@@ -41,14 +42,13 @@ class ReflectionWriter {
     codeExt.needMapExtension(convFun?.mapExt ?? const []);
 
     sb.write("    "); //lvl 2 indent
-    bool canBeNull = p.type.nullabilitySuffix == NullabilitySuffix.question;
     if (p.isPositional) {
-      _writeWrapped(convFun, () => attribWriter(p.name, canBeNull));
+      _writeWrapped(convFun, () => attribWriter(p));
       sb.writeln(",");
     } else {
       sb.write(p.name);
       sb.write(": ");
-      _writeWrapped(convFun, () => attribWriter(p.name, canBeNull));
+      _writeWrapped(convFun, () => attribWriter(p));
       sb.writeln(",");
     }
   }

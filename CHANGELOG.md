@@ -5,7 +5,9 @@
 - Minor code cleanups and refactors.
 - Additional example for styles (nested attributes)
 - First attempt to test cases.
-- Fix: nested attributes present in styles only had no proper methods generated for registry
+- Fix: nested attributes present in styles only had no proper methods generated for registry.
+- Introduce @null support for attribute values.
+- Support for default values for optional non nullable parameters.
 
 ## 0.1.1
 
