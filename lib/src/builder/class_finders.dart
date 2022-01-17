@@ -202,7 +202,7 @@ class GenericClassFinder {
   bool _itemsMatched(ClassElement clazz, List<Resolvable> items) {
     for (int index = items.length - 1; index >= 0; index--) {
       Resolvable item = items[index];
-      if (item.typeName != clazz.name) {
+      if (item.constructor != null || item.typeName != clazz.name) {
         continue;
       }
       if (item.designatedCtrName != null) {

@@ -244,14 +244,9 @@ class CodeGenerator {
       sb.write('data["');
       sb.write(name);
       sb.write('"]');
-      if (param.hasDefaultValue) {
-        sb.write(" ?? ");
-        sb.write(param.defaultValueCode);
-      } else {
-        if (!canBeNull) {
-          sb.write("!");
-        }
-      }
+      // if (!canBeNull) {
+      //   sb.write("!");
+      // }
     }
   }
 

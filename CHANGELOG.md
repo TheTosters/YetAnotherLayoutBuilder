@@ -8,6 +8,7 @@
 - Fix: nested attributes present in styles only had no proper methods generated for registry.
 - Introduce @null support for attribute values.
 - Support for default values for optional non nullable parameters.
+- Improved constructor parameter wrapping in code generation.
 
 ## 0.1.1
 

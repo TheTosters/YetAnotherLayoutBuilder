@@ -1,7 +1,13 @@
 <YalbTree>
     <YalbStyle name="label">
-        <_style __TextStyle="">
+        <_style __TextStyle="" fontSize="12">
             <_color value="FF00FF" />
+        </_style>
+    </YalbStyle>
+
+    <YalbStyle name="label2">
+        <_style __TextStyle="">
+            <_color value="FFFF" />
         </_style>
     </YalbStyle>
 
@@ -15,6 +21,7 @@
                 <Text data="This is button using style"/>
             </OutlinedButton>
             <Text _yalbStyle="label" data="This is label using style" />
+            <Text _yalbStyle="label2" data="This is label using style2" />
         </Column>
     </SafeArea>
 </YalbTree>
