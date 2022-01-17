@@ -163,6 +163,14 @@ class CodeGenerator {
 
       case Parentship.multipleChildren:
         return "addWidgetContainerBuilder";
+
+      default:
+        {
+          final r = "Internal error: Widget ${widget.name} has parentship set"
+              " to ${widget.parentship}, this is illegal here.";
+          logger.severe(r);
+          throw Exception(r);
+        }
     }
   }
 

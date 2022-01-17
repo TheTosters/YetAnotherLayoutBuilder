@@ -1,4 +1,4 @@
-enum Parentship { noChildren, oneChild, multipleChildren }
+enum Parentship { noChildren, oneChild, multipleChildren, oneChildOrNone, multipleChildrenOrNone }
 
 /// This is widget info class, created for each xml node which is considered
 /// to be an widget for which builders should be prepared
