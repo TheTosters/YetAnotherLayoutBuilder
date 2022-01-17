@@ -49,6 +49,7 @@ class Injector {
   /// [rawData] collection.
   /// - if key starts with [@] then value from [injectables] is taken and
   /// put into [rawData] collection.
+  /// - @null is auto-converted to null value, this is special name.
   bool inject(Map<String, dynamic> rawData, bool track) {
     bool anyInjection = false;
     //Expect that values in rawData is always String at this moment
@@ -70,6 +71,9 @@ class Injector {
 
   dynamic _processInjectable(String objName, String inMapKey,
       Map<String, dynamic> destMap, bool trackResolved) {
+    if (objName == "@null") {
+      return null;
+    }
     if (trackResolved) {
       _objectUsageMap.update(
           objName, (value) => TrackedValue(inMapKey, destMap, value),
