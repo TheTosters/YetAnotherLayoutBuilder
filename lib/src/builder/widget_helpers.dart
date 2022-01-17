@@ -52,8 +52,10 @@ void widgetsCompact(
     for (int t = widgets.length - 1; t > index; t--) {
       final other = widgets[t];
       if (widget.name == other.name) {
-        widget.constItems.addAllIfAbsent(other.constItems,
-            (inList, toAdd) => (inList.destAttrib == toAdd.destAttrib) &&
+        widget.constItems.addAllIfAbsent(
+            other.constItems,
+            (inList, toAdd) =>
+                (inList.destAttrib == toAdd.destAttrib) &&
                 (inList.typeName == toAdd.typeName));
         widget.attributes.addAll(other.attributes);
         widgets.removeAt(t);

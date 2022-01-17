@@ -52,9 +52,7 @@ class CodeGenerator {
   }
 
   Constructable? _widgetCtrFor(String typeName) {
-    return classCollector
-        .constructorsFor(typeName)
-        .firstOrNull;
+    return classCollector.constructorsFor(typeName).firstOrNull;
   }
 
   void _generateImports() {
@@ -299,10 +297,10 @@ class CodeGenerator {
         _writeComment(file.toString(), 2);
 
         final tmp =
-        progressCollector?.data[ProgressCollector.keyProcessedNodes];
+            progressCollector?.data[ProgressCollector.keyProcessedNodes];
         final nodes = (tmp?[file.toString()] as Iterable)
             .map((e) =>
-        classCollector.hasConstructor(e) ? e : "$e (not resolved)")
+                classCollector.hasConstructor(e) ? e : "$e (not resolved)")
             .toList();
         _writeCommentList("Processed nodes:", 3, nodes);
 
@@ -323,8 +321,8 @@ class CodeGenerator {
     }
   }
 
-  void _generateDataProcessorMethod(FoundWidget widget,
-      ConstructorElement ctr) {
+  void _generateDataProcessorMethod(
+      FoundWidget widget, ConstructorElement ctr) {
     if (widget.useCustomDataProcessor) {
       sb.write("dynamic ");
       _writeProcessorName(widget);
@@ -488,16 +486,15 @@ class CodeGenerator {
 
   //Detect enums or types other than String. Don't analyze constVals those are
   //processed in different way.
-  bool _needCustomDataProcessor(FoundWidget widget,
-      ConstructorElement constructor) {
+  bool _needCustomDataProcessor(
+      FoundWidget widget, ConstructorElement constructor) {
     Set<String> supported = const <String>{"int", "double", "bool"};
 
     bool result = constructor.parameters.any((p) =>
-    widget.attributes.contains(p.name) &&
+        widget.attributes.contains(p.name) &&
         (p.type.element?.kind == ElementKind.ENUM ||
             supported.contains(p.type.element?.name)));
 
     return result;
   }
-
 }

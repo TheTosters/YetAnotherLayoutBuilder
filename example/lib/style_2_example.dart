@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yet_another_layout_builder/yet_another_layout_builder.dart'
-as yalb;
+    as yalb;
 
 class StyleTwoExample extends StatefulWidget {
   const StyleTwoExample({Key? key}) : super(key: key);
@@ -28,7 +28,8 @@ class _StyleTwoExampleState extends State<StyleTwoExample> {
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 builder ??= yalb.LayoutBuilder(snapshot.data!, {
-                  "buttonBkgCol": MaterialStateProperty.all(const Color(0xFF0000FF))
+                  "buttonBkgCol":
+                      MaterialStateProperty.all(const Color(0xFF0000FF))
                 });
                 return builder!.build(context);
               }
