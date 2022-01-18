@@ -54,8 +54,13 @@ class ReflectionWriter {
 
   void _writeWrapped(
       ParameterElement p, ConvertFunction? convFun, VoidFunction callback) {
-    if (p.name == "child" || p.name == "children") {
+    if (p.name == "child") {
       callback();
+      return;
+    } else if (p.name == "children") {
+      sb.write("List.unmodifiable(");
+      callback();
+      sb.write(")");
       return;
     }
     if (convFun != null) {

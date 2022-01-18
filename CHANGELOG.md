@@ -9,6 +9,7 @@
 - Introduce @null support for attribute values.
 - Support for default values for optional non nullable parameters.
 - Improved constructor parameter wrapping in code generation.
+- Fix: Widgets which take list of children, now got it's copy.
 
 ## 0.1.1
 
