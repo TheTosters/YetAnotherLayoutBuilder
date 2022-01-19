@@ -10,6 +10,9 @@ Action _widgetProducerDelegate(dynamic context, dynamic data) {
   LayoutBuildContext lbc = context;
   final WidgetData wData = data;
   wData.buildContext = lbc.buildContext;
+  if (wData.hasSemiConsts) {
+    _processSemiConst(wData);
+  }
   //----------
   wData.stylist.applyStyleIfNeeded("<N/A>", wData);
   //----------
@@ -28,10 +31,23 @@ Action _widgetConsumeAndProduceDelegate(dynamic context, dynamic data) {
   LayoutBuildContext lbc = context;
   final WidgetData wData = data;
   wData.buildContext = lbc.buildContext;
+  if (wData.hasSemiConsts) {
+    _processSemiConst(wData);
+  }
   wData.stylist.applyStyleIfNeeded("<N/A>", wData);
   lbc.widget = wData.builder(wData);
   wData.parentChildren!.add(lbc.widget!);
   return Action.proceed;
+}
+
+void _processSemiConst(dynamic widgetOrConstData) {
+  for (final cData in widgetOrConstData.semiConsts!) {
+    if (cData.hasSemiConsts) {
+      _processSemiConst(cData);
+    }
+    widgetOrConstData.data[cData.attribName] =
+        cData.builder(cData.parentName, cData.data);
+  }
 }
 
 /// Builds instance of various classes which is used by parent [Widget] as an

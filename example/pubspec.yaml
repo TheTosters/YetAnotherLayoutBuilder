@@ -33,3 +33,4 @@ flutter:
     - assets/blocks.xml
     - assets/listview.xml
     - assets/interaction.xml
+    - assets/semi_const.xml

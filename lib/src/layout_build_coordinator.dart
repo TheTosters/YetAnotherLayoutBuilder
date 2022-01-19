@@ -23,16 +23,29 @@ typedef WidgetBuilder = material.Widget Function(WidgetData data);
 typedef ConstBuilder = dynamic Function(
     String parent, Map<String, dynamic> data);
 
-class ConstData {
+mixin SemiConstSupport {
+  List<ConstData>? semiConsts;
+
+  bool get hasSemiConsts => semiConsts != null;
+
+  void addSemiConst(ConstData cData) {
+    semiConsts ??= [];
+    semiConsts?.add(cData);
+  }
+}
+
+class ConstData with SemiConstSupport {
   final String attribName;
   final ConstBuilder builder;
   final String parentName;
   final Map<String, dynamic> data;
+  bool isSemiConst;
 
-  ConstData(this.parentName, this.attribName, this.builder, this.data);
+  ConstData(this.parentName, this.attribName, this.builder, this.data,
+      this.isSemiConst);
 }
 
-class WidgetData {
+class WidgetData with SemiConstSupport {
   final Map<String, dynamic> data;
   List<material.Widget>? children;
   late material.BuildContext buildContext;
@@ -59,6 +72,8 @@ class LayoutBuildCoordinator extends BuildCoordinator {
   final trueContainerMarker = Object();
   final BlockBuilder blockProvider;
   List<WidgetData> containersData = [];
+  final List<WidgetData> _widgetDataStack = [];
+  final List<ConstData> _constDataStack = [];
   String constValPath = "";
 
   LayoutBuildCoordinator(this.injector, this.blockProvider, this.stylist) {
@@ -69,6 +84,7 @@ class LayoutBuildCoordinator extends BuildCoordinator {
 
   @override
   void step(BuildAction action, ParsedItem item) {
+    //Support for: Containers
     if (item.type == ParsedItemType.owner &&
         item.extObj == trueContainerMarker) {
       if (action == BuildAction.goLevelUp) {
@@ -81,7 +97,7 @@ class LayoutBuildCoordinator extends BuildCoordinator {
         parseItem.dataProcessor(item.data.data);
       }
     }
-    //Build attrib path
+    //Support for: Build attrib path
     if (action == BuildAction.newItem) {
       if (item.type == ParsedItemType.owner) {
         constValPath = item.name;
@@ -94,6 +110,23 @@ class LayoutBuildCoordinator extends BuildCoordinator {
       final idx = constValPath.lastIndexOf("/");
       constValPath =
           idx < 0 ? "" : constValPath = constValPath.substring(0, idx);
+    }
+    //support for: SemiConst
+    final itemData = item.data;
+    if (action == BuildAction.newItem) {
+      if (itemData is WidgetData) {
+        _widgetDataStack.add(itemData);
+      } else if (itemData is ConstData) {
+        _constDataStack.add(itemData);
+      }
+    } else if (action == BuildAction.finaliseItem) {
+      if (itemData is WidgetData) {
+        final last = _widgetDataStack.removeLast();
+        assert(last == itemData);
+      } else if (itemData is ConstData) {
+        final last = _constDataStack.removeLast();
+        assert(last == itemData);
+      }
     }
   }
 
@@ -110,7 +143,7 @@ class LayoutBuildCoordinator extends BuildCoordinator {
       delegate = item?.delegate ?? _constValueDelegate;
       itemType = ParsedItemType.constValue;
 
-      injector.inject(state.data, false);
+      bool semiConst = injector.inject(state.data, true);
       String? ctrMarker;
       state.data.removeWhere((key, value) {
         final toDelete = key.startsWith("__");
@@ -125,7 +158,11 @@ class LayoutBuildCoordinator extends BuildCoordinator {
       //Note: don't call item.dataProcessor for this type of node
       //decision is that builder handle processing + building in one go!
       final name = state.delegateName.substring(1);
-      outData = ConstData(state.parentNodeName, name, builder, state.data);
+      outData =
+          ConstData(state.parentNodeName, name, builder, state.data, semiConst);
+      if (semiConst) {
+        _handleSemiConstTree(outData);
+      }
     } else {
       final item = Registry._findByName(state)!;
       delegate = item.delegate;
@@ -144,5 +181,42 @@ class LayoutBuildCoordinator extends BuildCoordinator {
     }
 
     return ParsedItem.from(state, delegate, outData, itemType, extObj: extObj);
+  }
+
+  void _handleSemiConstTree(ConstData cData) {
+    assert(cData.isSemiConst);
+    if (_constDataStack.isEmpty) {
+      //This is first constData for given widget. Nothing more need to be done
+      //just add this to WidgetData. In [step] function this object will be
+      //added to proper stacks, don't do it here!
+      _widgetDataStack.last.addSemiConst(cData);
+    } else {
+      //There is already other ConstData on stack (called Parent), so cData must
+      //become a child of it. Two things need to be considered:
+      //1) Parent is already semiConst: add cData as child to Parent
+      //2) Parent is not a semiConst:
+      //    add cData as semiConst child to Parent,
+      //    parent also becomes semiConst
+      //    repeat above steps until root ConstData is found
+      var parent = _constDataStack.last;
+      if (parent.isSemiConst) {
+        //Case 1
+        parent.addSemiConst(cData);
+      } else {
+        //Case 2
+        for (parent in _constDataStack.reversed) {
+          parent.addSemiConst(cData);
+          if (parent.isSemiConst) {
+            //Some other subtree of constData already marked this root as
+            //semiConst, we don't need to go deeper
+            return;
+          }
+          parent.isSemiConst = true;
+        }
+        //If we are here, we traversed constValues stack to the bottom, now
+        //parent is a root of whole constVal subtree, add it to widget
+        _widgetDataStack.last.addSemiConst(_constDataStack.first);
+      }
+    }
   }
 }
