@@ -59,7 +59,7 @@ const Map<CodeSnippets, String> _codeSnippetsPool = {
   }''',
   CodeSnippets.parseInt: r'''
 int? _improvedIntParse(String value) {
-  return int.tryParse(value) ?? int.parse(value, radix: 16);
+  return int.tryParse(value) ?? (int.tryParse(value, radix: 16) ?? 0);
 }''',
   CodeSnippets.parseIntForColor: r'''
 int? _parseIntForColor(String v) {
