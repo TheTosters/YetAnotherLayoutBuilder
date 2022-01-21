@@ -8,6 +8,7 @@ class Constructable {
   final Set<String> attributes;
   String? designatedCtrName; //sometimes designated constructor is given
   ConstructorElement? constructor;
+  String package = "";
   bool skipBuilder = false;
   String? specialDataProcessor;
 
@@ -17,9 +18,11 @@ class Constructable {
 
   Constructable.from(Constructable other)
       : attributes = Set.unmodifiable(other.attributes),
-        designatedCtrName = other.designatedCtrName;
+        designatedCtrName = other.designatedCtrName,
+        package = other.package;
 
-  Constructable.withAttributes(Set<String> attributes, this.designatedCtrName)
+  Constructable.withAttributes(
+      Set<String> attributes, this.designatedCtrName, this.package)
       : attributes = Set.unmodifiable(attributes);
 
   @override
@@ -31,8 +34,8 @@ class Constructable {
 class Resolvable extends Constructable {
   final String typeName;
 
-  Resolvable(this.typeName, Set<String> attributes, String? designatedCtrName)
-      : super.withAttributes(attributes, designatedCtrName);
+  Resolvable(this.typeName, Set<String> attributes, String? designatedCtrName, String package)
+      : super.withAttributes(attributes, designatedCtrName, package);
 
   @override
   bool operator ==(Object other) =>
@@ -55,7 +58,7 @@ class ClassConstructorsCollector {
   final Map<String, List<Constructable>> _constructors = {};
 
   void addConstructor(ClassElement clazz, ConstructorElement ctr,
-      Set<String> attributes, String? designatedCtrName) {
+      Set<String> attributes, String? designatedCtrName, String package) {
     final typeName = clazz.name;
     _constructors.update(typeName, (value) {
       Constructable? found;
@@ -71,12 +74,14 @@ class ClassConstructorsCollector {
           ..skipBuilder = hasAnnotation(clazz, "SkipWidgetBuilder")
           ..specialDataProcessor = getSpecialDataProcessor(clazz)
           ..designatedCtrName = designatedCtrName
-          ..attributes.addAll(attributes));
+          ..attributes.addAll(attributes)
+          ..package = package);
       } else {
         found.attributes.addAll(attributes);
         found.skipBuilder |= hasAnnotation(clazz, "SkipWidgetBuilder");
         found.specialDataProcessor ??= getSpecialDataProcessor(clazz);
         found.designatedCtrName ??= designatedCtrName;
+        found.package = package;
       }
       return value;
     },
@@ -86,6 +91,7 @@ class ClassConstructorsCollector {
                 ..skipBuilder = hasAnnotation(clazz, "SkipWidgetBuilder")
                 ..specialDataProcessor = getSpecialDataProcessor(clazz)
                 ..designatedCtrName = designatedCtrName
+                ..package = package
                 ..attributes.addAll(attributes)
             ]);
   }
@@ -142,6 +148,7 @@ class WidgetClassFinder extends GenericClassFinder {
 
 class GenericClassFinder {
   final List<LibraryElement> libraries = [];
+  final List<String> librariesImports = [];
   final Logger logger;
   final ClassConstructorsCollector collector;
 
@@ -151,6 +158,7 @@ class GenericClassFinder {
     for (var uri in libUri) {
       final lib = await resolver.libraryFor(AssetId.resolve(uri));
       libraries.add(lib);
+      librariesImports.add(uri.toString());
     }
   }
 
@@ -174,10 +182,11 @@ class GenericClassFinder {
   }
 
   void _findClasses(List<Resolvable> items) {
-    for (var library in libraries) {
+    for (int t =0; t < libraries.length; t++) {
+      final library = libraries[t];
       for (var export in library.exports) {
         var expLibrary = export.exportedLibrary!;
-        if (_findInLibrary(expLibrary, items)) {
+        if (_findInLibrary(expLibrary, librariesImports[t], items)) {
           //all items found
           return;
         }
@@ -185,10 +194,10 @@ class GenericClassFinder {
     }
   }
 
-  bool _findInLibrary(LibraryElement lib, List<Resolvable> items) {
+  bool _findInLibrary(LibraryElement lib, String package, List<Resolvable> items) {
     for (var unit in lib.units) {
       for (var clazz in unit.classes) {
-        if (_itemsMatched(clazz, items)) {
+        if (_itemsMatched(clazz, package, items)) {
           return true;
         }
       }
@@ -199,7 +208,7 @@ class GenericClassFinder {
   //Check if class have constructor to which params match. If so, then
   //assign this constructor to item with this same name.
   //returns true if all items in map have assigned constructor
-  bool _itemsMatched(ClassElement clazz, List<Resolvable> items) {
+  bool _itemsMatched(ClassElement clazz, String package, List<Resolvable> items) {
     for (int index = items.length - 1; index >= 0; index--) {
       Resolvable item = items[index];
       if (item.constructor != null || item.typeName != clazz.name) {
@@ -218,7 +227,7 @@ class GenericClassFinder {
         throw Exception(reason);
       }
       collector.addConstructor(
-          clazz, item.constructor!, item.attributes, item.designatedCtrName);
+          clazz, item.constructor!, item.attributes, item.designatedCtrName, package);
       items.removeAt(index);
     }
     return items.isEmpty;

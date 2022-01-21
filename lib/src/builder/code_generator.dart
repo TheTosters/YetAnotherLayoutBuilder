@@ -55,8 +55,49 @@ class CodeGenerator {
     return classCollector.constructorsFor(typeName).firstOrNull;
   }
 
+  void _collectConstImports(List<FoundConst> constItems, Set<String> imports) {
+    for (var c in constItems) {
+      final constructable =
+          classCollector.constructorsFor(c.typeName).firstOrNull;
+      if (constructable != null && constructable.package.isNotEmpty) {
+        imports.add(constructable.package);
+      }
+      if (c.constItems.isNotEmpty) {
+        _collectConstImports(c.constItems, imports);
+      }
+    }
+  }
+
+  Set<String> _collectImports() {
+    Set<String> imports = {};
+    for (final widget in widgets) {
+      final constructable = _widgetCtrFor(widget.name);
+      if (constructable != null && constructable.package.isNotEmpty) {
+        imports.add(constructable.package);
+      }
+      _collectConstImports(widget.constItems, imports);
+    }
+    imports.removeWhere((element) {
+      return element.isEmpty ||
+          element.startsWith("package:yet_another_layout_builder");
+    });
+    if (imports.contains("package:flutter/material.dart")) {
+      imports.removeAll([
+        "package:flutter/widgets.dart",
+        "package:flutter/rendering.dart",
+        "package:flutter/painting.dart"
+      ]);
+    }
+    return imports;
+  }
+
   void _generateImports() {
-    sb.writeln("import 'package:flutter/material.dart';");
+    final imports = _collectImports();
+    for (final import in imports) {
+      sb.write("import '");
+      sb.write(import);
+      sb.writeln("';");
+    }
     sb.writeln(
         "import 'package:yet_another_layout_builder/yet_another_layout_builder.dart';");
     sb.writeln();

@@ -76,7 +76,7 @@ class WidgetRepositoryBuilder implements Builder {
     List<Resolvable> allConsts = [];
     List<Resolvable> allWidgets = [];
     for (var widget in widgets) {
-      allWidgets.add(Resolvable(widget.name, widget.attributes, null));
+      allWidgets.add(Resolvable(widget.name, widget.attributes, null, ""));
       collectConst(widget.constItems, allConsts);
     }
 

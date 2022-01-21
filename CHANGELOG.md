@@ -10,6 +10,7 @@
 - Support for default values for optional non nullable parameters.
 - Improved constructor parameter wrapping in code generation.
 - Fix: Widgets which take list of children, now got it's copy.
+- Fix: required imports are added to generated widget registry.
 
 ## 0.1.1
 
