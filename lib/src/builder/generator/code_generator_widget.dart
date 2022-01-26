@@ -1,13 +1,13 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:collection/collection.dart';
 import 'package:logging/logging.dart';
-import '../dart_extensions.dart';
-import '../widget_helpers.dart';
-import 'code_generator_const_values.dart';
 
 import '../class_finders.dart';
+import '../dart_extensions.dart';
 import '../found_items.dart';
 import '../progress_collector.dart';
+import '../widget_helpers.dart';
+import 'code_generator_const_values.dart';
 import 'reflection_writer.dart';
 
 class CodeGeneratorWidgets extends CodeGeneratorConstValues {
@@ -50,7 +50,7 @@ class CodeGeneratorWidgets extends CodeGeneratorConstValues {
     Set<String> supported = const <String>{"int", "double", "bool"};
 
     bool result = constructor.parameters.any((p) =>
-    widget.attributes.contains(p.name) &&
+        widget.attributes.contains(p.name) &&
         (p.type.element?.kind == ElementKind.ENUM ||
             supported.contains(p.type.element?.name)));
 
@@ -177,7 +177,6 @@ class CodeGeneratorWidgets extends CodeGeneratorConstValues {
     return classCollector.constructorsFor(typeName).firstOrNull;
   }
 
-
   void _generateDataProcessorMethod(
       FoundWidget widget, ConstructorElement ctr) {
     if (widget.useCustomDataProcessor) {
@@ -226,5 +225,4 @@ class CodeGeneratorWidgets extends CodeGeneratorConstValues {
     sb.write(widget.name.deCapitalize());
     sb.write("DataProcessor");
   }
-
 }

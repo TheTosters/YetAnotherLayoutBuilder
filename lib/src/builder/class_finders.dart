@@ -34,7 +34,8 @@ class Constructable {
 class Resolvable extends Constructable {
   final String typeName;
 
-  Resolvable(this.typeName, Set<String> attributes, String? designatedCtrName, String package)
+  Resolvable(this.typeName, Set<String> attributes, String? designatedCtrName,
+      String package)
       : super.withAttributes(attributes, designatedCtrName, package);
 
   @override
@@ -182,7 +183,7 @@ class GenericClassFinder {
   }
 
   void _findClasses(List<Resolvable> items) {
-    for (int t =0; t < libraries.length; t++) {
+    for (int t = 0; t < libraries.length; t++) {
       final library = libraries[t];
       for (var export in library.exports) {
         var expLibrary = export.exportedLibrary!;
@@ -194,7 +195,8 @@ class GenericClassFinder {
     }
   }
 
-  bool _findInLibrary(LibraryElement lib, String package, List<Resolvable> items) {
+  bool _findInLibrary(
+      LibraryElement lib, String package, List<Resolvable> items) {
     for (var unit in lib.units) {
       for (var clazz in unit.classes) {
         if (_itemsMatched(clazz, package, items)) {
@@ -208,7 +210,8 @@ class GenericClassFinder {
   //Check if class have constructor to which params match. If so, then
   //assign this constructor to item with this same name.
   //returns true if all items in map have assigned constructor
-  bool _itemsMatched(ClassElement clazz, String package, List<Resolvable> items) {
+  bool _itemsMatched(
+      ClassElement clazz, String package, List<Resolvable> items) {
     for (int index = items.length - 1; index >= 0; index--) {
       Resolvable item = items[index];
       if (item.constructor != null || item.typeName != clazz.name) {
@@ -226,8 +229,8 @@ class GenericClassFinder {
         logger.severe(reason);
         throw Exception(reason);
       }
-      collector.addConstructor(
-          clazz, item.constructor!, item.attributes, item.designatedCtrName, package);
+      collector.addConstructor(clazz, item.constructor!, item.attributes,
+          item.designatedCtrName, package);
       items.removeAt(index);
     }
     return items.isEmpty;

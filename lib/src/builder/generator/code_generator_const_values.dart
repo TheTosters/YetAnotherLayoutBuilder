@@ -7,10 +7,8 @@ import 'code_generator_base.dart';
 import 'reflection_writer.dart';
 
 class CodeGeneratorConstValues extends CodeGeneratorBase {
-  CodeGeneratorConstValues(
-      ClassConstructorsCollector classCollector,
-      ProgressCollector? progressCollector,
-      Logger logger)
+  CodeGeneratorConstValues(ClassConstructorsCollector classCollector,
+      ProgressCollector? progressCollector, Logger logger)
       : super(classCollector, progressCollector, logger);
 
   void generateConstValueMethods(Set<String> constValClasses) {
@@ -86,8 +84,7 @@ class CodeGeneratorConstValues extends CodeGeneratorBase {
         sb.writeln(".containsAll(data.keys)) {");
       }
       sb.write("    return ");
-      writeBuilderName(ctr.constructor!.enclosingElement.name,
-          index: index);
+      writeBuilderName(ctr.constructor!.enclosingElement.name, index: index);
       sb.write("(parent, data);\n  } else");
       index++;
     }
@@ -125,5 +122,4 @@ class CodeGeneratorConstValues extends CodeGeneratorBase {
       }
     }
   }
-
 }
