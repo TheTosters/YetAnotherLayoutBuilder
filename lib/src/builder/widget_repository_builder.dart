@@ -10,7 +10,7 @@ import 'progress_collector.dart';
 import 'class_finders.dart';
 import 'widget_helpers.dart';
 import 'xml_analyzer.dart';
-import 'code_generator.dart';
+import 'generator/code_generator.dart';
 
 Builder widgetRepoBuilder(BuilderOptions options) =>
     WidgetRepositoryBuilder(options);
