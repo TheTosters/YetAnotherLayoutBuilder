@@ -2,6 +2,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:logging/logging.dart';
 
+import '../dart_extensions.dart';
 import '../class_finders.dart';
 import '../progress_collector.dart';
 import 'code_snippets.dart';
@@ -70,4 +71,25 @@ class CodeGeneratorBase {
     }
     sb.write("}");
   }
+
+  bool isBuilderSelectorNeeded(String typeName) {
+    final val = classCollector.constructorsFor(typeName);
+    return val.length > 1;
+  }
+
+  void writeBuilderName(String typeName, {int? index}) {
+    sb.write("_");
+    sb.write(typeName.deCapitalize());
+    if (index != null) {
+      sb.write(index);
+    }
+    sb.write("BuilderAutoGen");
+  }
+
+  void writeSelectorName(String typeName) {
+    sb.write("_");
+    sb.write(typeName.deCapitalize());
+    sb.write("SelectorAutoGen");
+  }
+
 }

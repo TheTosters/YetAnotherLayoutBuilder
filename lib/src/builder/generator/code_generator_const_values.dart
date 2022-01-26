@@ -1,6 +1,5 @@
 import 'package:logging/logging.dart';
 import '../class_finders.dart';
-import '../dart_extensions.dart';
 import '../found_items.dart';
 import '../progress_collector.dart';
 
@@ -47,7 +46,7 @@ class CodeGeneratorConstValues extends CodeGeneratorBase {
       //function signature
       sb.write(constVal.constructor!.enclosingElement.name);
       sb.write(" ");
-      _writeConstValBuilderName(constVal.constructor!.enclosingElement.name,
+      writeBuilderName(constVal.constructor!.enclosingElement.name,
           index: index);
       sb.writeln("(String parent, Map<String, dynamic> data) {");
 
@@ -68,7 +67,7 @@ class CodeGeneratorConstValues extends CodeGeneratorBase {
     Constructable tmp = constructables.first;
     sb.write(tmp.constructor!.enclosingElement.name);
     sb.write(" ");
-    _writeContValSelectorName(tmp.constructor!.enclosingElement.name);
+    writeSelectorName(tmp.constructor!.enclosingElement.name);
     sb.writeln("(String parent, Map<String, dynamic> data) {");
 
     //body
@@ -87,7 +86,7 @@ class CodeGeneratorConstValues extends CodeGeneratorBase {
         sb.writeln(".containsAll(data.keys)) {");
       }
       sb.write("    return ");
-      _writeConstValBuilderName(ctr.constructor!.enclosingElement.name,
+      writeBuilderName(ctr.constructor!.enclosingElement.name,
           index: index);
       sb.write("(parent, data);\n  } else");
       index++;
@@ -99,7 +98,6 @@ class CodeGeneratorConstValues extends CodeGeneratorBase {
     sb.writeln("  }\n}\n");
   }
 
-
   void _writeConstBuilderRegisterCall(String inTreePath, FoundConst constVal) {
     if (classCollector.hasConstructor(constVal.typeName)) {
       sb.write('  Registry.addValueBuilder("');
@@ -109,10 +107,10 @@ class CodeGeneratorConstValues extends CodeGeneratorBase {
       sb.write('", "');
       sb.write(constVal.typeName);
       sb.write('", ');
-      if (_isBuilderSelectorNeeded(constVal.typeName)) {
-        _writeContValSelectorName(constVal.typeName);
+      if (isBuilderSelectorNeeded(constVal.typeName)) {
+        writeSelectorName(constVal.typeName);
       } else {
-        _writeConstValBuilderName(constVal.typeName);
+        writeBuilderName(constVal.typeName);
       }
       sb.writeln(");");
     }
@@ -126,26 +124,6 @@ class CodeGeneratorConstValues extends CodeGeneratorBase {
             inTreePath + '/_' + constVal.destAttrib, constVal.constItems);
       }
     }
-  }
-
-  void _writeConstValBuilderName(String typeName, {int? index}) {
-    sb.write("_");
-    sb.write(typeName.deCapitalize());
-    if (index != null) {
-      sb.write(index);
-    }
-    sb.write("ValBuilderAutoGen");
-  }
-
-  void _writeContValSelectorName(String typeName) {
-    sb.write("_");
-    sb.write(typeName.deCapitalize());
-    sb.write("ValSelectorAutoGen");
-  }
-
-  bool _isBuilderSelectorNeeded(String typeName) {
-    final val = classCollector.constructorsFor(typeName);
-    return val.length > 1;
   }
 
 }

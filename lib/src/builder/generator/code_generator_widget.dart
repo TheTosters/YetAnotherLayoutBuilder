@@ -77,7 +77,7 @@ class CodeGeneratorWidgets extends CodeGeneratorConstValues {
         sb.write('("');
         sb.write(widget.name);
         sb.write('", ');
-        _writeWidgetBuilderName(widget);
+        writeBuilderName(widget.name);
         if (widget.useCustomDataProcessor) {
           sb.write(", dataProcessor:");
           _writeProcessorName(widget);
@@ -115,12 +115,6 @@ class CodeGeneratorWidgets extends CodeGeneratorConstValues {
     }
   }
 
-  void _writeWidgetBuilderName(FoundWidget widget) {
-    sb.write("_");
-    sb.write(widget.name.deCapitalize());
-    sb.write("BuilderAutoGen");
-  }
-
   void _generateBuilderMethod(FoundWidget widget) {
     final widgetCtr = _widgetCtrFor(widget.name);
     if (widgetCtr?.skipBuilder == true) {
@@ -132,7 +126,7 @@ class CodeGeneratorWidgets extends CodeGeneratorConstValues {
 
     //function signature
     sb.write("Widget ");
-    _writeWidgetBuilderName(widget);
+    writeBuilderName(widget.name);
     sb.writeln("(WidgetData data) {");
 
     //body
