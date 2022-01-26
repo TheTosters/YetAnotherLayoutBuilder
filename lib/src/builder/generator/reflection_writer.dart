@@ -1,8 +1,8 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 
-import 'annotations.dart';
-import 'class_finders.dart';
+import '../annotations.dart';
+import '../class_finders.dart';
 import 'code_snippets.dart';
 
 typedef AttribAccessWriter = void Function(ParameterElement);

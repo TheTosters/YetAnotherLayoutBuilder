@@ -1,4 +1,4 @@
-part "code_snippets_base.dart";
+part 'code_snippets_base.dart';
 
 /// All possible code snippets must be accessed through this enum
 enum CodeSnippets {

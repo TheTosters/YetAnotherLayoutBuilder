@@ -1,4 +1,4 @@
-part of "code_snippets.dart";
+part of 'code_snippets.dart';
 
 //This is turbo ugly, but I've no better idea yet ;(
 const Map<CodeSnippets, String> _codeSnippetsPool = {

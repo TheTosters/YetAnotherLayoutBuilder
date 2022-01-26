@@ -2,14 +2,14 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:collection/collection.dart';
 import 'package:logging/logging.dart';
-import 'package:yet_another_layout_builder/src/builder/code_snippets.dart';
-import 'package:yet_another_layout_builder/src/builder/reflection_writer.dart';
+import 'package:yet_another_layout_builder/src/builder/generator/code_snippets.dart';
+import 'package:yet_another_layout_builder/src/builder/generator/reflection_writer.dart';
 
-import 'class_finders.dart';
-import 'dart_extensions.dart';
-import 'found_items.dart';
-import 'progress_collector.dart';
-import 'widget_helpers.dart';
+import '../class_finders.dart';
+import '../dart_extensions.dart';
+import '../found_items.dart';
+import '../progress_collector.dart';
+import '../widget_helpers.dart';
 
 class CodeGenerator {
   final Iterable<FoundWidget> widgets;
