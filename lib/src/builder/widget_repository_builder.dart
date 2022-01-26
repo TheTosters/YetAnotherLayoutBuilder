@@ -94,16 +94,6 @@ class WidgetRepositoryBuilder implements Builder {
 
     widgetsCompact(widgets, collector);
 
-    //TODO: Support this in future?
-    for (var w in widgets) {
-      if (collector.constructorsFor(w.name).length > 1) {
-        final reason =
-            "${w.name}: Multiple constructors for widget not supported";
-        logger.severe(reason);
-        throw Exception(reason);
-      }
-    }
-
     return collector;
   }
 

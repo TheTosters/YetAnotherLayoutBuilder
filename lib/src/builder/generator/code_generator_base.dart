@@ -57,7 +57,7 @@ class CodeGeneratorBase {
     }
   }
 
-  void writeStringSet(Set<String> set) {
+  void writeStringSet(Iterable<String> set) {
     bool needComa = false;
     sb.write("{");
     for (var s in set) {
@@ -91,4 +91,5 @@ class CodeGeneratorBase {
     sb.write(typeName.deCapitalize());
     sb.write("SelectorAutoGen");
   }
+
 }

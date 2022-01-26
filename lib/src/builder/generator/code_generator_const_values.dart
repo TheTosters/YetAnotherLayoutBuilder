@@ -31,7 +31,7 @@ class CodeGeneratorConstValues extends CodeGeneratorBase {
           _generateConstBuilderMethod(c, index: index);
           index++;
         }
-        _generateConstSelectorMethod(constructables);
+        _generateConstValSelectorMethod(constructables);
       }
     }
   }
@@ -60,7 +60,35 @@ class CodeGeneratorConstValues extends CodeGeneratorBase {
     }
   }
 
-  void _generateConstSelectorMethod(List<Constructable> constructables) {
+  void _writeConstBuilderRegisterCall(String inTreePath, FoundConst constVal) {
+    if (classCollector.hasConstructor(constVal.typeName)) {
+      sb.write('  Registry.addValueBuilder("');
+      sb.write(inTreePath);
+      sb.write('/_');
+      sb.write(constVal.destAttrib);
+      sb.write('", "');
+      sb.write(constVal.typeName);
+      sb.write('", ');
+      if (isBuilderSelectorNeeded(constVal.typeName)) {
+        writeSelectorName(constVal.typeName);
+      } else {
+        writeBuilderName(constVal.typeName);
+      }
+      sb.writeln(");");
+    }
+  }
+
+  void writeConstBuilder(String inTreePath, List<FoundConst> constItems) {
+    for (var constVal in constItems) {
+      _writeConstBuilderRegisterCall(inTreePath, constVal);
+      if (constVal.constItems.isNotEmpty) {
+        writeConstBuilder(
+            inTreePath + '/_' + constVal.destAttrib, constVal.constItems);
+      }
+    }
+  }
+
+  void _generateConstValSelectorMethod(List<Constructable> constructables) {
     //function signature
     Constructable tmp = constructables.first;
     sb.write(tmp.constructor!.enclosingElement.name);
@@ -93,33 +121,5 @@ class CodeGeneratorConstValues extends CodeGeneratorBase {
     sb.write(tmp.constructor!.enclosingElement.name);
     sb.writeln(' data: \$data");');
     sb.writeln("  }\n}\n");
-  }
-
-  void _writeConstBuilderRegisterCall(String inTreePath, FoundConst constVal) {
-    if (classCollector.hasConstructor(constVal.typeName)) {
-      sb.write('  Registry.addValueBuilder("');
-      sb.write(inTreePath);
-      sb.write('/_');
-      sb.write(constVal.destAttrib);
-      sb.write('", "');
-      sb.write(constVal.typeName);
-      sb.write('", ');
-      if (isBuilderSelectorNeeded(constVal.typeName)) {
-        writeSelectorName(constVal.typeName);
-      } else {
-        writeBuilderName(constVal.typeName);
-      }
-      sb.writeln(");");
-    }
-  }
-
-  void writeConstBuilder(String inTreePath, List<FoundConst> constItems) {
-    for (var constVal in constItems) {
-      _writeConstBuilderRegisterCall(inTreePath, constVal);
-      if (constVal.constItems.isNotEmpty) {
-        writeConstBuilder(
-            inTreePath + '/_' + constVal.destAttrib, constVal.constItems);
-      }
-    }
   }
 }

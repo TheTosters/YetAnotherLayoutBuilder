@@ -26,9 +26,18 @@
         </Container>
     </YalbBlockDef>
 
-    <Container width="400" height="400">
-        <ListView>
-            <YalbWidgetFactory provider="@prv"/>
-        </ListView>
-    </Container>
+    <Column>
+        <Container height="100" width="400">
+            <ListView>
+                <YalbWidgetFactory provider="@prv" />
+            </ListView>
+        </Container>
+        <Container height="50" width="400">
+            <_color value="FF0" />
+            <ListView itemBuilder="@itemBuilder" itemCount="2" />
+        </Container>
+    </Column>
+    <!--    <Container width="400" height="100">-->
+    <!--        <AliasedList __ListView="" itemBuilder="@itemBuilder"/>-->
+    <!--    </Container>-->
 </YalbTree>

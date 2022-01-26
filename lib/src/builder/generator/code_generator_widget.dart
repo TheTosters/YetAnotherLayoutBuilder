@@ -24,17 +24,40 @@ class CodeGeneratorWidgets extends CodeGeneratorConstValues {
   void generateWidgetsCode() {
     List<Resolvable> allConsts = [];
     for (var widget in widgets) {
-      //TODO: Currently support only one constructor for widgets
-      final constructable = _widgetCtrFor(widget.name);
-      final constructor = constructable?.constructor;
-      if (constructor != null) {
-        _generateBuilderMethod(widget);
+      final constructables = classCollector.constructorsFor(widget.name);
+      if (constructables.length == 1) {
+        final constructable = constructables[0];
+        _generateBuilderMethod(widget, constructable);
         widget.useCustomDataProcessor =
-            (constructable!.specialDataProcessor != null) ||
-                _needCustomDataProcessor(widget, constructor);
-
-        _generateDataProcessorMethod(widget, constructor);
+            (constructable.specialDataProcessor != null) ||
+                _needCustomDataProcessor(widget, constructable.constructor!);
+        _generateDataProcessorMethod(
+            widget, constructable.constructor!.parameters);
+      } else if (constructables.length > 1) {
+        //Designated constructor first, then: more params -> higher in list
+        constructables.sort((a, b) {
+          if (a.designatedCtrName != null) {
+            return b.designatedCtrName == null ? -1 : 0;
+          } else {
+            return b.attributes.length - a.attributes.length;
+          }
+        });
+        int index = 0;
+        List<ParameterElement> ctrParams = [];
+        for (var c in constructables) {
+          _generateBuilderMethod(widget, c, index: index);
+          widget.useCustomDataProcessor |= (c.specialDataProcessor != null) ||
+              _needCustomDataProcessor(widget, c.constructor!);
+          ctrParams.addAllIfAbsent(
+              c.constructor!.parameters,
+              (inList, newValue) =>
+                  inList.name == newValue.name && inList.type == newValue.type);
+          index++;
+        }
+        _generateDataProcessorMethod(widget, ctrParams);
+        _generateWidgetSelectorMethod(constructables, widget.parentship);
       }
+
       collectConst(widget.constItems, allConsts);
     }
     final constValClasses = allConsts.map((e) => e.typeName).toSet();
@@ -69,15 +92,21 @@ class CodeGeneratorWidgets extends CodeGeneratorConstValues {
   }
 
   void _writeWidgetBuilderRegisterCall(FoundWidget widget) {
-    final widgetCtr = _widgetCtrFor(widget.name);
+    final widgetCtr = classCollector.constructorsFor(widget.name).firstOrNull;
     if (widgetCtr?.constructor != null) {
+      //TODO: Observer, this can be potentialy problematic
+      //if one constructor should be skipped, and another not
       if (widgetCtr?.skipBuilder == false) {
         sb.write("  Registry.");
         sb.write(_determineAddMethod(widget));
         sb.write('("');
         sb.write(widget.name);
         sb.write('", ');
-        writeBuilderName(widget.name);
+        if (isBuilderSelectorNeeded(widget.name)) {
+          writeSelectorName(widget.name);
+        } else {
+          writeBuilderName(widget.name);
+        }
         if (widget.useCustomDataProcessor) {
           sb.write(", dataProcessor:");
           _writeProcessorName(widget);
@@ -115,23 +144,23 @@ class CodeGeneratorWidgets extends CodeGeneratorConstValues {
     }
   }
 
-  void _generateBuilderMethod(FoundWidget widget) {
-    final widgetCtr = _widgetCtrFor(widget.name);
-    if (widgetCtr?.skipBuilder == true) {
+  void _generateBuilderMethod(FoundWidget widget, Constructable widgetCtr,
+      {int? index}) {
+    if (widgetCtr.skipBuilder == true) {
       return;
     }
-    verifyRequiredCtrParams(widgetCtr!);
+    verifyRequiredCtrParams(widgetCtr);
     final rw = ReflectionWriter(widgetCtr, codeExt, sb);
     childHandled = false;
 
     //function signature
-    sb.write("Widget ");
-    writeBuilderName(widget.name);
+    sb.write(widget.name);
+    sb.write(" ");
+    writeBuilderName(widget.name, index: index);
     sb.writeln("(WidgetData data) {");
 
     //body
     sb.write("  return ");
-    //sb.write(widget.name);
     rw.writeCtrName();
     sb.writeln("(");
     rw.writeCtrParams(writeAttribGetter, noWrappers: true);
@@ -166,24 +195,21 @@ class CodeGeneratorWidgets extends CodeGeneratorConstValues {
       }
       errorPart = "multiple children";
     }
-
+/* TODO: what to do here?
     final reason = "Widget ${widget.name} has $errorPart in xml, but"
         " corresponding class doesn't expect it.";
     logger.severe(reason);
     throw Exception(reason);
-  }
-
-  Constructable? _widgetCtrFor(String typeName) {
-    return classCollector.constructorsFor(typeName).firstOrNull;
+ */
   }
 
   void _generateDataProcessorMethod(
-      FoundWidget widget, ConstructorElement ctr) {
+      FoundWidget widget, Iterable<ParameterElement> ctrParams) {
     if (widget.useCustomDataProcessor) {
       sb.write("dynamic ");
       _writeProcessorName(widget);
       sb.writeln("(Map<String, dynamic> inData) {");
-      for (var p in ctr.parameters) {
+      for (var p in ctrParams) {
         if (!widget.attributes.contains(p.name)) {
           continue;
         }
@@ -224,5 +250,62 @@ class CodeGeneratorWidgets extends CodeGeneratorConstValues {
     sb.write("_");
     sb.write(widget.name.deCapitalize());
     sb.write("DataProcessor");
+  }
+
+  void _generateWidgetSelectorMethod(
+      List<Constructable> constructables, Parentship parentship) {
+    //function signature
+    Constructable tmp = constructables.first;
+    sb.write(tmp.constructor!.enclosingElement.name);
+    sb.write(" ");
+    writeSelectorName(tmp.constructor!.enclosingElement.name);
+    sb.writeln("(WidgetData wData) {");
+
+    //body
+    int index = 0;
+    sb.write(" ");
+    bool hasDefaultCtr = false;
+    for (var ctr in constructables) {
+      if (index != 0) {
+        sb.write(" else");
+      }
+      if (ctr.designatedCtrName != null) {
+        //Search designated ctr with key '_ctr'
+        sb.write(' if (wData.data["_ctr"] == "');
+        sb.write(ctr.designatedCtrName);
+        sb.writeln('") {');
+      } else {
+        //Just attributes
+        hasDefaultCtr |= _constructConditionForParams(ctr.attributes);
+        // sb.write("wData.data.isNotEmpty && ");
+        // writeStringSet(ctr.attributes);
+        // sb.writeln(".containsAll(wData.data.keys)) {");
+      }
+      sb.write("    return ");
+      writeBuilderName(ctr.constructor!.enclosingElement.name, index: index);
+      sb.write("(wData);\n  }");
+      index++;
+    }
+    if (!hasDefaultCtr) {
+      //function end
+      sb.write(' else {\n    throw Exception("Unknown constructor for class ');
+      sb.write(tmp.constructor!.enclosingElement.name);
+      sb.writeln(' data: \$wData");');
+      sb.writeln("  }\n");
+    }
+    sb.writeln("\n}\n");
+  }
+
+  bool _constructConditionForParams(Set<String> attributes) {
+    Iterable<String> filtered = attributes
+        .where((element) => element != "children" && element != "child");
+    if (filtered.isEmpty) {
+      sb.write(" {\n");
+      return true;
+    }
+    sb.write(" if (wData.data.isNotEmpty && ");
+    writeStringSet(filtered);
+    sb.writeln(".containsAll(wData.data.keys)) {");
+    return false;
   }
 }
