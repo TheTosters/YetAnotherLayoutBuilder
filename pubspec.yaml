@@ -1,7 +1,7 @@
 name: yet_another_layout_builder
 description: Yet another Flutter library for building layouts from xml assets (YALB). Using builder for
   generating most of needed code to perform transform from xml to widgets.
-version: 0.1.0
+version: 0.2.0
 homepage: https://github.com/TheTosters/YetAnotherLayoutBuilder
 repository: https://github.com/TheTosters/YetAnotherLayoutBuilder
 
@@ -16,7 +16,7 @@ dependencies:
   xml: ^5.3.1
   validators: ^3.0.0
   path: ^1.8.0
-  processing_tree: ^0.2.1
+  processing_tree: ^0.2.2
   collection: ^1.1.15
   logging: ^1.0.2
   glob: ^2.0.2

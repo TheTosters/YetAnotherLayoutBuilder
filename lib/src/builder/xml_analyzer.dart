@@ -1,12 +1,12 @@
 import 'package:collection/collection.dart';
 import 'package:logging/logging.dart';
-import 'package:xml/xml.dart';
 import 'package:validators/validators.dart';
+import 'package:xml/xml.dart';
 import 'package:yet_another_layout_builder/src/builder/styles_collector.dart';
 
+import 'dart_extensions.dart';
 import 'found_items.dart';
 import 'progress_collector.dart';
-import 'dart_extensions.dart';
 import 'widget_helpers.dart';
 
 class XmlAnalyzer {
@@ -43,7 +43,17 @@ class XmlAnalyzer {
         }
       }
     }
-    final wName = xmlElement.name.toString();
+    var wName = attributes.firstWhere((e) => e.startsWith("__"),
+        orElse: () => xmlElement.name.toString());
+    String? designatedCtrName;
+    if (wName.startsWith("__")) {
+      attributes.remove(wName); //prevent to poisson constructor search
+      designatedCtrName = xmlElement.getAttribute(wName);
+      if (designatedCtrName?.isEmpty ?? false) {
+        designatedCtrName = null;
+      }
+      wName = wName.substring(2).capitalize(); //skip '__'
+    }
 
     //should not be processed?
     if (ignoredNodes.any((i) => i.toString() == wName)) {
@@ -58,7 +68,8 @@ class XmlAnalyzer {
       _processYalbStyleNode(xmlElement, attributes);
     }
 
-    final widget = FoundWidget(wName, attributes, constItems);
+    final widget =
+        FoundWidget(wName, attributes, constItems, designatedCtrName);
     widgets.add(widget);
     //Update info about parentship, only more children can be set never
     //from more children to less children!

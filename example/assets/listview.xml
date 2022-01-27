@@ -25,19 +25,20 @@
             <Text data="$rowText" />
         </Container>
     </YalbBlockDef>
-
     <Column>
-        <Container height="100" width="400">
+        <Container height="300" width="400">
+            <!-- Autodetect constructor for Listview -->
             <ListView>
                 <YalbWidgetFactory provider="@prv" />
             </ListView>
         </Container>
         <Container height="50" width="400">
-            <_color value="FF0" />
+            <!-- Autodetect second constructor for Listview -->
             <ListView itemBuilder="@itemBuilder" itemCount="2" />
         </Container>
+        <Container height="50" width="400">
+            <!-- We point explicit to ListView.builder() constructor for Listview -->
+            <ListView __ListView="builder" itemBuilder="@itemBuilder"/>
+        </Container>
     </Column>
-    <!--    <Container width="400" height="100">-->
-    <!--        <AliasedList __ListView="" itemBuilder="@itemBuilder"/>-->
-    <!--    </Container>-->
 </YalbTree>

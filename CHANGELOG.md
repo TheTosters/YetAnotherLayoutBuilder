@@ -1,4 +1,4 @@
-## 0.1.2
+## 0.2.0
 
 - Attribute builder now uses path to identify builder for const values.
 - Widget builder now supports nested attributes (also for styles).
@@ -11,6 +11,7 @@
 - Improved constructor parameter wrapping in code generation.
 - Fix: Widgets which take list of children, now got it's copy.
 - Fix: required imports are added to generated widget registry.
+- Support for multiple constructors for widgets.
 
 ## 0.1.1
 

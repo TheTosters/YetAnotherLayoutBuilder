@@ -12,10 +12,12 @@ class FoundWidget {
   final String name; //equivalent of type name eg. "Container"
   final Set<String> attributes;
   final List<FoundConst> constItems;
+  //Value of type pointing attrib in form __EdgeInsets="fromLTRB" -> fromLTRB
+  final String? designatedCtrName;
   Parentship parentship = Parentship.noChildren;
   bool useCustomDataProcessor = false;
 
-  FoundWidget(this.name, this.attributes, this.constItems);
+  FoundWidget(this.name, this.attributes, this.constItems, this.designatedCtrName);
 
   @override
   String toString() {

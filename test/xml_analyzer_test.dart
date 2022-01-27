@@ -149,7 +149,8 @@ FoundWidget _buildWidget(
     required Set<String> attributes,
     required Parentship parentship,
     required List<FoundConst> constItems}) {
-  return FoundWidget(name, attributes, constItems)..parentship = parentship;
+  return FoundWidget(name, attributes, constItems, null)
+    ..parentship = parentship;
 }
 
 bool _isExpectedWidget(FoundWidget w, List<FoundWidget> expected) {

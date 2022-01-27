@@ -130,12 +130,27 @@ class LayoutBuildCoordinator extends BuildCoordinator {
     }
   }
 
+  void _transformCtrInfo(BuildPhaseState state) {
+    String? ctrMarker;
+    state.data.removeWhere((key, value) {
+      final toDelete = key.startsWith("__");
+      if (toDelete && value?.isNotEmpty) {
+        ctrMarker = value;
+      }
+      return toDelete;
+    });
+    if (ctrMarker != null) {
+      state.data["_ctr"] = ctrMarker;
+    }
+  }
+
   @override
   ParsedItem requestData(BuildPhaseState state) {
     PNDelegate delegate;
     ParsedItemType itemType;
     dynamic outData;
     dynamic extObj;
+
     if (state.delegateName.startsWith("_")) {
       String attribPath = constValPath + "/" + state.delegateName;
       final item = Registry._findByPath(state, attribPath);
@@ -144,17 +159,7 @@ class LayoutBuildCoordinator extends BuildCoordinator {
       itemType = ParsedItemType.constValue;
 
       bool semiConst = injector.inject(state.data, true);
-      String? ctrMarker;
-      state.data.removeWhere((key, value) {
-        final toDelete = key.startsWith("__");
-        if (toDelete && value?.isNotEmpty) {
-          ctrMarker = value;
-        }
-        return toDelete;
-      });
-      if (ctrMarker != null) {
-        state.data["_ctr"] = ctrMarker;
-      }
+      _transformCtrInfo(state);
       //Note: don't call item.dataProcessor for this type of node
       //decision is that builder handle processing + building in one go!
       final name = state.delegateName.substring(1);
@@ -169,6 +174,7 @@ class LayoutBuildCoordinator extends BuildCoordinator {
       itemType = item.itemType;
 
       injector.inject(state.data, true);
+      _transformCtrInfo(state);
       final siblings = containersData.last.children;
       outData = WidgetData(siblings, blockProvider, stylist, item.builder,
           item.dataProcessor(state.data), item.dataProcessor);
