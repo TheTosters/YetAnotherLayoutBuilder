@@ -1,4 +1,10 @@
-enum Parentship { noChildren, oneChild, multipleChildren }
+enum Parentship {
+  noChildren,
+  oneChild,
+  multipleChildren,
+  oneChildOrNone,
+  multipleChildrenOrNone
+}
 
 /// This is widget info class, created for each xml node which is considered
 /// to be an widget for which builders should be prepared
@@ -6,10 +12,18 @@ class FoundWidget {
   final String name; //equivalent of type name eg. "Container"
   final Set<String> attributes;
   final List<FoundConst> constItems;
+  //Value of type pointing attrib in form __EdgeInsets="fromLTRB" -> fromLTRB
+  final String? designatedCtrName;
   Parentship parentship = Parentship.noChildren;
   bool useCustomDataProcessor = false;
 
-  FoundWidget(this.name, this.attributes, this.constItems);
+  FoundWidget(
+      this.name, this.attributes, this.constItems, this.designatedCtrName);
+
+  @override
+  String toString() {
+    return 'FoundWidget{name: $name}';
+  }
 }
 
 /// This class holds info needed to generate builder for any constValue node
@@ -26,8 +40,15 @@ class FoundConst {
   final String destAttrib;
 
   final Set<String> attributes;
+  final List<FoundConst> constItems;
 
   FoundConst(this.typeName, this.destAttrib, Set<String> attributes,
       this.designatedCtrName)
-      : attributes = Set.unmodifiable(attributes);
+      : attributes = Set.from(attributes),
+        constItems = [];
+
+  @override
+  String toString() {
+    return 'FoundConst{typeName: $typeName, destAttrib: $destAttrib}';
+  }
 }

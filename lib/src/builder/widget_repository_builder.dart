@@ -1,16 +1,16 @@
 import 'package:build/build.dart';
 import 'package:glob/glob.dart';
-import 'package:path/path.dart' as path;
 import 'package:logging/logging.dart';
+import 'package:path/path.dart' as path;
 import 'package:yet_another_layout_builder/src/builder/styles_collector.dart';
 
+import 'class_finders.dart';
 import 'found_items.dart';
+import 'generator/code_generator.dart';
 import 'path_matcher.dart';
 import 'progress_collector.dart';
-import 'class_finders.dart';
 import 'widget_helpers.dart';
 import 'xml_analyzer.dart';
-import 'code_generator.dart';
 
 Builder widgetRepoBuilder(BuilderOptions options) =>
     WidgetRepositoryBuilder(options);
@@ -76,11 +76,9 @@ class WidgetRepositoryBuilder implements Builder {
     List<Resolvable> allConsts = [];
     List<Resolvable> allWidgets = [];
     for (var widget in widgets) {
-      allWidgets.add(Resolvable(widget.name, widget.attributes, null));
-      for (var c in widget.constItems) {
-        allConsts
-            .add(Resolvable(c.typeName, c.attributes, c.designatedCtrName));
-      }
+      allWidgets.add(Resolvable(
+          widget.name, widget.attributes, widget.designatedCtrName, ""));
+      collectConst(widget.constItems, allConsts);
     }
 
     final collector = ClassConstructorsCollector();
@@ -96,16 +94,6 @@ class WidgetRepositoryBuilder implements Builder {
     constResolver.process(allConsts);
 
     widgetsCompact(widgets, collector);
-
-    //TODO: Support this in future?
-    for (var w in widgets) {
-      if (collector.constructorsFor(w.name).length > 1) {
-        final reason =
-            "${w.name}: Multiple constructors for widget not supported";
-        logger.severe(reason);
-        throw Exception(reason);
-      }
-    }
 
     return collector;
   }

@@ -27,12 +27,19 @@ class _BlocksState extends State<ListViewExample> {
             future: _loadFileContent("assets/listview.xml"),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-                builder ??= yalb.LayoutBuilder(
-                    snapshot.data!, {"prv": _factoryDataProvider});
+                builder ??= yalb.LayoutBuilder(snapshot.data!, {
+                  "prv": _factoryDataProvider,
+                  "itemBuilder": _indexedWidgetBuilder,
+                });
                 return builder!.build(context);
               }
               return const CircularProgressIndicator();
             }));
+  }
+
+  Widget _indexedWidgetBuilder(BuildContext context, int index) {
+    return Text("Item from builder ${index + 1}",
+        style: const TextStyle(color: Colors.red));
   }
 
   List<yalb.WidgetFactoryItem> _factoryDataProvider() {

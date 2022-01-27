@@ -1,0 +1,20 @@
+<YalbTree>
+    <YalbBlockDef name="txt">
+        <Text data="This is label using injected color">
+            <_style __TextStyle="">
+                <_color value="@injectedColor" />
+            </_style>
+        </Text>
+    </YalbBlockDef>
+    <YalbBlockDef name="cont">
+        <Container>
+            <_color value="@injectedColor"/>
+            <Text data="In container"/>
+        </Container>
+    </YalbBlockDef>
+    <SafeArea>
+        <Column crossAxisAlignment="start">
+            <YalbWidgetFactory provider="@prv"/>
+        </Column>
+    </SafeArea>
+</YalbTree>

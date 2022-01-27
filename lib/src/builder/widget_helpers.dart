@@ -1,6 +1,7 @@
 import 'package:analyzer/dart/element/element.dart';
-import 'package:yet_another_layout_builder/src/builder/dart_extensions.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:collection/collection.dart';
+import 'package:yet_another_layout_builder/src/builder/dart_extensions.dart';
 
 import 'class_finders.dart';
 import 'found_items.dart';
@@ -12,9 +13,13 @@ Parentship parentshipFromConstructor(ConstructorElement constructor) {
   final childParam = findChildParam(constructor);
   final childrenParam = findChildrenParam(constructor);
   if (childrenParam != null) {
-    return Parentship.multipleChildren;
+    return childrenParam.type.nullabilitySuffix == NullabilitySuffix.question
+        ? Parentship.multipleChildrenOrNone
+        : Parentship.multipleChildren;
   } else if (childParam != null) {
-    return Parentship.oneChild;
+    return childParam.type.nullabilitySuffix == NullabilitySuffix.question
+        ? Parentship.oneChildOrNone
+        : Parentship.oneChild;
   }
   return Parentship.noChildren;
 }
@@ -24,11 +29,16 @@ Parentship parentshipFromConstructor(ConstructorElement constructor) {
 void combineParentship(FoundWidget widget, Parentship p) {
   if (widget.parentship == Parentship.noChildren &&
       p != Parentship.noChildren) {
-    widget.parentship = p;
-    widget.attributes.add(p == Parentship.oneChild ? "child" : "children");
+    //if xxxOrNone found, and no children in XML found, then don't change parentship
+    if (p != Parentship.oneChildOrNone &&
+        p != Parentship.multipleChildrenOrNone) {
+      widget.parentship = p;
+      widget.attributes.add(p == Parentship.oneChild ? "child" : "children");
+    }
   } else if (widget.parentship == Parentship.oneChild &&
-      p == Parentship.multipleChildren) {
-    widget.parentship = p;
+      (p == Parentship.multipleChildren ||
+          p == Parentship.multipleChildrenOrNone)) {
+    widget.parentship = Parentship.multipleChildren;
     widget.attributes.remove("child");
     widget.attributes.add("children");
   }
@@ -52,8 +62,11 @@ void widgetsCompact(
     for (int t = widgets.length - 1; t > index; t--) {
       final other = widgets[t];
       if (widget.name == other.name) {
-        widget.constItems.addAllIfAbsent(other.constItems,
-            (inList, toAdd) => inList.destAttrib == toAdd.destAttrib);
+        widget.constItems.addAllIfAbsent(
+            other.constItems,
+            (inList, toAdd) =>
+                (inList.destAttrib == toAdd.destAttrib) &&
+                (inList.typeName == toAdd.typeName));
         widget.attributes.addAll(other.attributes);
         widgets.removeAt(t);
       }
@@ -77,6 +90,16 @@ void addStyleRelatedAttributes(List<FoundWidget> widgets,
           ctr.attributes.add(ea);
         }
       }
+    }
+  }
+}
+
+void collectConst(List<FoundConst> constItems, List<Resolvable> allConsts) {
+  for (var c in constItems) {
+    allConsts
+        .add(Resolvable(c.typeName, c.attributes, c.designatedCtrName, ""));
+    if (c.constItems.isNotEmpty) {
+      collectConst(c.constItems, allConsts);
     }
   }
 }
