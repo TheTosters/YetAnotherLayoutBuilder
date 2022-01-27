@@ -610,23 +610,6 @@ or ...
 ```
 if value of ```_myField``` changed and you don't want to use const text.
 
-**External data + const value => NO GO.**
-
-Lets take code from previous pitfall, but use it with this xml:
-```xml
-    <TextButton onPressed="@ButtonCallback">
-        <Text>
-            <_data="$MyText"/>
-        </Text>
-    </TextButton>
-```
-This creates situation in which change of ```MyText``` by any means is impossible (yet... maybe it
-will change in future ). Why? Since argument for ```Text``` is given as embedded node started
-with ```_``` (often referred as const value) it will be eliminated from build process after
-parsing xml. Such xml will be processed in way which evaluates data argument for constructor and
-then this value is considered as final, and passed to constructor without possibility to change in
-any way.
-
 **My data processor is not used? (advanced)**
 
 If you remember section about ```Registry``` there are methods like:
