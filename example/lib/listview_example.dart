@@ -38,7 +38,8 @@ class _BlocksState extends State<ListViewExample> {
   }
 
   Widget _indexedWidgetBuilder(BuildContext context, int index) {
-    return Text("Item from builder ${index + 1}", style: const TextStyle(color: Colors.red));
+    return Text("Item from builder ${index + 1}",
+        style: const TextStyle(color: Colors.red));
   }
 
   List<yalb.WidgetFactoryItem> _factoryDataProvider() {

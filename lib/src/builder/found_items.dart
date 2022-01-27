@@ -17,7 +17,8 @@ class FoundWidget {
   Parentship parentship = Parentship.noChildren;
   bool useCustomDataProcessor = false;
 
-  FoundWidget(this.name, this.attributes, this.constItems, this.designatedCtrName);
+  FoundWidget(
+      this.name, this.attributes, this.constItems, this.designatedCtrName);
 
   @override
   String toString() {

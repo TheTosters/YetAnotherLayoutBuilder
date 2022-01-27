@@ -91,5 +91,4 @@ class CodeGeneratorBase {
     sb.write(typeName.deCapitalize());
     sb.write("SelectorAutoGen");
   }
-
 }
